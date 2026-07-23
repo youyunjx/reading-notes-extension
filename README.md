@@ -17,6 +17,8 @@ source**. Everything is stored locally on your machine and browsed from a side p
   edit, and delete. Click a source to reopen the page.
 - **Export to CSV** — one click writes all notes (including citation columns) to a CSV file
   and opens its folder.
+- **Backup & restore (JSON)** — save a full JSON backup anywhere (including this project
+  folder) and import it back later or into a reinstalled extension.
 - **Local & private** — data lives in `chrome.storage.local`; no account, no backend.
 
 ## Safety & offline guarantee
@@ -158,9 +160,141 @@ That's it — you're taking reading notes. Your notes are stored on this PC only
 
 ### Using Microsoft Edge instead
 
-Edge is built on the same engine, so the same `dist` folder works. Open `edge://extensions`,
-turn on **Developer mode** (bottom-left), click **Load unpacked**, and pick the `dist`
+Edge is built on the same engine, so the same folder works. Open `edge://extensions`,
+turn on **Developer mode** (bottom-left), click **Load unpacked**, and pick the extension
 folder.
+
+---
+
+## Make it permanent (survives reboot)
+
+If the extension **disappears after you restart your PC**, it's almost always one of these:
+
+- It was loaded from a **dev build** (`npm run dev`), which depends on a running dev server
+  and becomes invalid after a reboot. Always load a **production build** (`npm run build`).
+- It was loaded from a folder that gets **rebuilt or cleaned** (e.g. `dist/`, or a temp
+  location). Load it from a **stable, dedicated folder** instead.
+
+A production, unpacked extension loaded from a stable folder **does** persist across reboots
+as long as **Developer mode stays on** and the folder isn't deleted.
+
+### One command to install it permanently
+
+```bash
+npm run install:local
+```
+
+This builds the extension and copies it to a dedicated folder outside the project:
+
+```
+C:\Users\<you>\ReadingNotesExtension
+```
+
+Then load **that** folder once via **Load unpacked** (see Step 7 above). Because it lives
+outside the project, normal rebuilds, `git` operations, and cleanups never touch it.
+
+> Set a different location with
+> `READING_NOTES_INSTALL_DIR="D:\Apps\ReadingNotes" npm run install:local`.
+
+> **PowerShell error `npm.ps1 cannot be loaded because running scripts is disabled`?**
+> That's PowerShell's execution policy blocking npm's script wrapper — nothing to do with
+> this project. Easiest fix: run the command in **Command Prompt** (type `cmd` in the File
+> Explorer address bar) instead of PowerShell. Or in PowerShell call `npm.cmd run
+> install:local`. Or unblock it once with
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+
+**To update later:** run `npm run install:local` again, then click the circular refresh
+arrow on the Reading Notes card in `chrome://extensions`.
+
+### Your notes are safe across reinstalls
+
+The extension has a pinned ID (via a `key` in the manifest), so Chrome always treats it as
+the *same* extension no matter where it's loaded from. That means your saved notes — stored
+under that ID in `chrome.storage.local` — **survive** reinstalling, moving, or reloading the
+extension. (The signing key lives in `.keys/`, which is gitignored — keep it if you plan to
+pack or publish.)
+
+### If Chrome keeps disabling it on startup
+
+Chrome may show a *"Disable developer-mode extensions"* prompt each launch — click the **X**
+/ **Keep** to dismiss it; it does not remove the extension. For a truly unattended,
+one-click install with automatic updates and no Developer mode, publish it to the Chrome
+Web Store (below).
+
+---
+
+## Publishing to the Chrome Web Store (formal install)
+
+This turns the extension into a real, one-click install with auto-updates and no Developer
+mode. The project prepares everything; the account, the one-time **US$5** developer fee, and
+the final **Submit** are steps only you can do (they need your Google account).
+
+### 1. Build the upload package
+
+```bash
+npm run package
+```
+
+This produces `reading-notes-vX.Y.Z.zip` in the project root — a clean store build with the
+dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
+
+### 2. Create a developer account (one time)
+
+1. Go to the **Chrome Web Store Developer Dashboard**:
+   <https://chrome.google.com/webstore/devconsole>
+2. Sign in with your Google account and pay the one-time **US$5** registration fee.
+
+### 3. Create the item and upload
+
+1. Click **Add new item** → upload the `reading-notes-vX.Y.Z.zip`.
+2. Fill in the **store listing** (suggested text below).
+3. Fill in **Privacy practices** (see below) — required before you can submit.
+4. Choose **Visibility**: **Unlisted** (anyone with the link can install — great for personal
+   use / sharing) or **Public** (appears in search). You can change this later.
+5. Click **Submit for review**. Review usually takes a few hours to a few days.
+
+### 4. Suggested store listing
+
+- **Name:** Reading Notes
+- **Summary (≤132 chars):** Select text on any page, add your insight, record the source and
+  citation. Private, offline, with CSV/JSON export.
+- **Category:** Productivity
+- **Description:**
+  > Reading Notes lets you capture what matters while you read. Select text on any web page,
+  > add your own insight, and it saves the quote with its source (title + URL). Add
+  > bibliographic details — author, editor, book, chapter, page, publisher, year — and reuse a
+  > saved book across many notes. Browse, search, and edit everything in the side panel, and
+  > export to CSV or JSON. All notes are stored locally on your device — no account, no
+  > servers, no tracking.
+- **Screenshots (required, 1280×800 or 640×400):** capture the side panel with a few notes,
+  the on-page "Add note" button, and the citation form.
+
+### 5. Privacy practices answers
+
+- **Single purpose:** "Take reading notes: save selected text with the user's insight, source,
+  and citation, viewable in a side panel."
+- **Permission justifications:**
+  - *host access `<all_urls>` / activeTab* — read the text the user selects and the page's
+    title/URL so a note can record where it came from.
+  - *storage* — save notes locally on the device.
+  - *contextMenus* — the right-click "Save selection as reading note" command.
+  - *sidePanel* — display notes in the browser side panel.
+  - *downloads* — write CSV/JSON export files when the user requests them.
+- **Data usage:** does **not** collect or transmit user data; nothing is sold or shared.
+  (See `PRIVACY.md`.)
+- **Privacy policy URL:** host `PRIVACY.md` somewhere public — e.g. the raw GitHub URL of this
+  file after you push the repo — and paste that link.
+
+### 6. Moving your existing notes to the published version
+
+The Web Store version gets a **new extension ID**, so it starts with empty storage. Carry your
+notes over with the built-in backup:
+
+1. In your current (unpacked) extension: side panel → **⬇ Backup** → save the JSON.
+2. Install the published extension, open its side panel → **⬆ Import** → choose that JSON.
+
+> Once you publish, update by bumping `version` in `package.json`, running `npm run package`,
+> and uploading the new zip in the dashboard.
 
 ---
 
@@ -202,6 +336,29 @@ To avoid retyping the same book on every note:
 
 Saved books are also available from the floating composer's **📚 Attach a saved source**
 dropdown, so you can cite while capturing on ordinary pages too.
+
+## Backup, restore & where your data lives
+
+Your notes live in the browser's **`chrome.storage.local`** (inside your Chrome profile),
+tied to the extension's ID. A Chrome extension is sandboxed and **cannot** use an arbitrary
+folder (like this project folder) as its live database — that's a browser security rule. So
+to keep a copy in the project folder, use the JSON backup:
+
+- **⬇ Backup** (side-panel toolbar) — saves a full JSON file of all notes + sources. The
+  Save As dialog lets you store it wherever you like, e.g. inside this project folder.
+- **⬆ Import** — restores notes/sources from a backup JSON file. Importing **merges**
+  (adds anything whose id isn't already present), so it's safe to run more than once and
+  won't create duplicates.
+
+Because the extension now has a **pinned ID**, your live data already survives reinstalling
+and moving the extension. The JSON backup is your portable, off-Chrome copy — keep a recent
+one in the project folder.
+
+> **Recovering notes from an older, differently-installed copy:** each unpacked extension
+> loaded *without* a pinned key gets an ID derived from its folder path, and its data sits in
+> `…/User Data/<Profile>/Local Extension Settings/<old-id>/` as a LevelDB. `scripts/`
+> contains one-off helpers (`compute-ids.mjs`, `recover-old-notes.mjs`) used to locate such a
+> folder and export it to a backup JSON you can then **Import**.
 
 ## Project structure
 

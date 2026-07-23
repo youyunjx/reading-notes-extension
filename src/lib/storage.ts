@@ -197,3 +197,95 @@ export function subscribeSources(callback: (sources: SavedSource[]) => void): ()
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);
 }
+
+// --- Import / restore from a backup file ---
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+function sanitizeCitation(c: unknown): Citation | undefined {
+  if (!c || typeof c !== 'object') return undefined;
+  const r = c as Record<string, unknown>;
+  const citation: Citation = {
+    author: str(r.author),
+    editor: str(r.editor),
+    bookName: str(r.bookName),
+    chapter: str(r.chapter),
+    page: str(r.page),
+    publisher: str(r.publisher),
+    year: str(r.year),
+  };
+  return citationHasData(citation) ? citation : undefined;
+}
+
+function sanitizeNote(raw: unknown): Note | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const n = raw as Record<string, unknown>;
+  if (typeof n.id !== 'string') return null;
+  const src = (n.source && typeof n.source === 'object' ? n.source : {}) as Record<string, unknown>;
+  const note: Note = {
+    id: n.id,
+    quote: str(n.quote),
+    insight: str(n.insight),
+    source: {
+      url: str(src.url),
+      title: str(src.title),
+      ...(typeof src.faviconUrl === 'string' ? { faviconUrl: src.faviconUrl } : {}),
+    },
+    createdAt: typeof n.createdAt === 'number' ? n.createdAt : Date.now(),
+    updatedAt: typeof n.updatedAt === 'number' ? n.updatedAt : Date.now(),
+  };
+  const citation = sanitizeCitation(n.citation);
+  if (citation) note.citation = citation;
+  return note;
+}
+
+function sanitizeSource(raw: unknown): SavedSource | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  if (typeof s.id !== 'string') return null;
+  const citation = sanitizeCitation(s.citation);
+  if (!citation) return null;
+  return {
+    id: s.id,
+    citation,
+    createdAt: typeof s.createdAt === 'number' ? s.createdAt : Date.now(),
+  };
+}
+
+/**
+ * Merge notes/sources from a backup into storage. Existing items are kept;
+ * only items whose id isn't already present are added (safe to run twice).
+ */
+export async function importData(incoming: {
+  notes?: unknown[];
+  sources?: unknown[];
+}): Promise<{ addedNotes: number; addedSources: number }> {
+  let addedNotes = 0;
+  let addedSources = 0;
+
+  const notes = await getRaw();
+  const noteIds = new Set(notes.map((n) => n.id));
+  for (const raw of incoming.notes ?? []) {
+    const note = sanitizeNote(raw);
+    if (note && !noteIds.has(note.id)) {
+      notes.push(note);
+      noteIds.add(note.id);
+      addedNotes++;
+    }
+  }
+  if (addedNotes > 0) await writeNotes(notes);
+
+  const sources = await getRawSources();
+  const sourceIds = new Set(sources.map((s) => s.id));
+  for (const raw of incoming.sources ?? []) {
+    const source = sanitizeSource(raw);
+    if (source && !sourceIds.has(source.id)) {
+      sources.push(source);
+      sourceIds.add(source.id);
+      addedSources++;
+    }
+  }
+  if (addedSources > 0) await writeSources(sources);
+
+  return { addedNotes, addedSources };
+}

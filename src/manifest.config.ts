@@ -6,6 +6,13 @@ export default defineManifest({
   name: 'Reading Notes',
   version: pkg.version,
   description: pkg.description,
+  // sidePanel needs Chrome 114+; match_origin_as_fallback needs 119+.
+  minimum_chrome_version: '119',
+  // Pins a stable extension ID regardless of which folder it's loaded from, so
+  // your saved notes (keyed by extension ID in chrome.storage.local) survive
+  // reinstalling or moving the extension. The matching private key is in
+  // .keys/extension-private-key.pem (gitignored) — keep it if you ever pack/publish.
+  key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1xQVO402XI6wh81QDoeRT0wzXxh+T2NEFwGEYBnG3D4dA5HZNEvSAu9y716X85u0HVk09ik5rvNda2XN03h6sk54wvJt6Up7QD26WDA7awzuGAGL5zBs0hqtnB+6aV3WsjtY0Dka7BfABiQBQ97lhFZ7GVAXkQfKrNZX28nuy6grpPWQ9MkH2ro7gX/laxQkFJGP7Bj8Hg8TSPwTYykLYVU+gYMXBHUZSwLscvviK/hQMpg4kfOb6EwDqUvhgQ+VSmp8RPiKZU6ahBC4d17dYbx46jcopjErkgRrXQ+HK5U/LsoD6uAlbsaR3sZSXP5ToxzJYrgTTA7WOjOA/JvLGwIDAQAB',
   icons: {
     16: 'icons/icon16.png',
     48: 'icons/icon48.png',

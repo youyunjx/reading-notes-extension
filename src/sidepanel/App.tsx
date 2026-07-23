@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getNotes,
   subscribeNotes,
@@ -11,8 +11,10 @@ import {
   getSources,
   subscribeSources,
   saveSource,
+  importData,
 } from '../lib/storage';
 import { exportNotesToCsv } from '../lib/exportCsv';
+import { exportBackup, parseBackup } from '../lib/backup';
 import type { Citation, Note, PendingCapture, SavedSource } from '../lib/types';
 import { SearchBar } from './components/SearchBar';
 import { NoteCard } from './components/NoteCard';
@@ -65,6 +67,15 @@ export function App() {
   const [exporting, setExporting] = useState(false);
   const [pending, setPending] = useState<PendingCapture | null>(null);
   const [sources, setSources] = useState<SavedSource[]>([]);
+  const [status, setStatus] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const statusTimer = useRef<number | undefined>(undefined);
+
+  function flashStatus(message: string) {
+    setStatus(message);
+    if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    statusTimer.current = window.setTimeout(() => setStatus(null), 4000);
+  }
 
   useEffect(() => {
     getNotes().then((n) => {
@@ -141,6 +152,35 @@ export function App() {
     await saveSource(citation);
   }
 
+  async function handleExportBackup() {
+    try {
+      await exportBackup();
+    } catch (err) {
+      console.error('[Reading Notes] Backup export failed:', err);
+    }
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const { notes: n, sources: s } = parseBackup(text);
+      const { addedNotes, addedSources } = await importData({ notes: n, sources: s });
+      flashStatus(
+        addedNotes || addedSources
+          ? `Imported ${addedNotes} note(s)` +
+              (addedSources ? ` and ${addedSources} source(s)` : '') +
+              '.'
+          : 'Nothing new to import (already present).',
+      );
+    } catch (err) {
+      console.error('[Reading Notes] Import failed:', err);
+      flashStatus('Import failed — is this a valid backup JSON file?');
+    }
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return notes;
@@ -182,15 +222,43 @@ export function App() {
           <span aria-hidden>📖</span>
           <span className="app-title-text">Reading Notes</span>
           <span className="badge">{notes.length}</span>
+        </h1>
+
+        <div className="toolbar">
           <button
-            className="export-btn"
+            className="tool-btn"
             onClick={handleExport}
             disabled={exporting || notes.length === 0}
             title="Export all notes to a CSV file, then open its folder"
           >
-            {exporting ? 'Exporting…' : '⬇ Export CSV'}
+            {exporting ? 'Exporting…' : '⬇ CSV'}
           </button>
-        </h1>
+          <button
+            className="tool-btn"
+            onClick={handleExportBackup}
+            disabled={notes.length === 0}
+            title="Save a JSON backup (choose where — e.g. your project folder)"
+          >
+            ⬇ Backup
+          </button>
+          <button
+            className="tool-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Restore notes from a JSON backup file"
+          >
+            ⬆ Import
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+        </div>
+
+        {status && <div className="toolbar-status">{status}</div>}
+
         <SearchBar value={query} onChange={setQuery} />
       </header>
 
