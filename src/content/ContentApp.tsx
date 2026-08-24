@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { SelectionButton } from './SelectionButton';
 import { Composer } from './Composer';
 import { sendMessage } from '../lib/messages';
-import type { Citation, NoteSource } from '../lib/types';
+import type { RuntimeResponse } from '../lib/messages';
+import { getNotes, subscribeNotes } from '../lib/storage';
+import { applyMarkers, clearMarkers } from './highlighter';
+import type { MarkTarget } from './highlighter';
+import type { Citation, Note, NoteSource } from '../lib/types';
 
 const HOST_ID = 'reading-notes-root';
 const MIN_SELECTION_LENGTH = 1;
@@ -31,6 +35,17 @@ function getPageSource(): NoteSource {
   };
 }
 
+/** Compare page URLs ignoring the hash fragment (in-page anchors). */
+function normalizeUrl(u: string): string {
+  try {
+    const x = new URL(u);
+    x.hash = '';
+    return x.href;
+  } catch {
+    return u;
+  }
+}
+
 function isInsideOurUi(target: EventTarget | null): boolean {
   if (!(target instanceof Node)) return false;
   const host = document.getElementById(HOST_ID);
@@ -54,11 +69,14 @@ function readSelection(): CapturedSelection | null {
   return { text, anchor: { x: rect.left, y: rect.bottom }, at: Date.now() };
 }
 
+const IS_TOP_FRAME = window.top === window;
+
 export function ContentApp() {
   const [quote, setQuote] = useState('');
   const [buttonAnchor, setButtonAnchor] = useState<Anchor | null>(null);
   const [composerAnchor, setComposerAnchor] = useState<Anchor | null>(null);
   const [saved, setSaved] = useState(false);
+  const [pageNotes, setPageNotes] = useState<Note[]>([]);
   const savedTimer = useRef<number | undefined>(undefined);
   // Latest non-empty selection, cached from `selectionchange`. This keeps
   // capture working on pages that clear the selection inside their own mouseup
@@ -143,24 +161,91 @@ export function ContentApp() {
     };
   }, []);
 
+  // Track which saved notes belong to the current page/frame. Drives both the
+  // "notes on this page" flag (top frame) and the inline markers (all frames).
+  // Fully local — reads chrome.storage.local, no network. Recomputes when notes
+  // change and when the URL changes (SPA navigations caught by a light poll).
+  useEffect(() => {
+    let notesCache: Note[] = [];
+    let currentUrl = normalizeUrl(location.href);
+    const recompute = () =>
+      setPageNotes(notesCache.filter((n) => normalizeUrl(n.source.url) === currentUrl));
+
+    getNotes().then((n) => {
+      notesCache = n;
+      recompute();
+    });
+    const unsubscribe = subscribeNotes((n) => {
+      notesCache = n;
+      recompute();
+    });
+
+    const onNav = () => {
+      const u = normalizeUrl(location.href);
+      if (u !== currentUrl) {
+        currentUrl = u;
+        recompute();
+      }
+    };
+    window.addEventListener('popstate', onNav);
+    window.addEventListener('hashchange', onNav);
+    const poll = window.setInterval(onNav, 1500);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('popstate', onNav);
+      window.removeEventListener('hashchange', onNav);
+      window.clearInterval(poll);
+    };
+  }, []);
+
+  // Clicking an inline marker asks the side panel to focus that note.
+  const onMarkerClick = useCallback((t: MarkTarget) => {
+    void sendMessage({
+      type: 'FOCUS_NOTE',
+      payload: { noteId: t.id, sourceKey: t.sourceKey },
+    });
+  }, []);
+
+  // (Re)insert inline markers whenever this page's notes change. A short delayed
+  // re-run catches content that renders slightly after we first look.
+  useEffect(() => {
+    const targets: MarkTarget[] = pageNotes.map((n) => ({
+      id: n.id,
+      quote: n.quote,
+      sourceKey: n.source.url || n.source.title || 'unknown',
+    }));
+    applyMarkers(targets, onMarkerClick);
+    const retry = window.setTimeout(() => applyMarkers(targets, onMarkerClick), 1200);
+    return () => {
+      window.clearTimeout(retry);
+      clearMarkers();
+    };
+  }, [pageNotes, onMarkerClick]);
+
+  const openSidePanel = useCallback(() => {
+    void sendMessage({ type: 'OPEN_SIDE_PANEL' });
+  }, []);
+
   const openComposer = useCallback(() => {
     if (buttonAnchor) setComposerAnchor(buttonAnchor);
     setButtonAnchor(null);
   }, [buttonAnchor]);
 
   const handleSave = useCallback(
-    async (insight: string, citation?: Citation) => {
+    async (insight: string, citation?: Citation): Promise<RuntimeResponse> => {
       const res = await sendMessage({
         type: 'ADD_NOTE',
         payload: { quote, insight, source: getPageSource(), citation },
       });
       if (!res.ok) {
         console.error('[Reading Notes] Failed to save note:', res.error);
-        return;
+        return res;
       }
       closeAll();
       setSaved(true);
       savedTimer.current = window.setTimeout(() => setSaved(false), 1800);
+      return res;
     },
     [quote, closeAll],
   );
@@ -178,8 +263,45 @@ export function ContentApp() {
           onCancel={closeAll}
         />
       )}
+      {IS_TOP_FRAME && pageNotes.length > 0 && (
+        <PageNoteFlag count={pageNotes.length} onClick={openSidePanel} />
+      )}
       {saved && <SavedToast />}
     </>
+  );
+}
+
+/** Small badge shown when the current page already has saved notes. */
+function PageNoteFlag({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={`${count} note${count === 1 ? '' : 's'} on this page — open Reading Notes`}
+      style={{
+        position: 'fixed',
+        bottom: 20,
+        right: 20,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '8px 12px',
+        background: '#4F46E5',
+        color: '#fff',
+        border: 'none',
+        borderRadius: 999,
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: 'pointer',
+        boxShadow: '0 4px 14px rgba(79,70,229,0.4)',
+        zIndex: 2147483646,
+      }}
+    >
+      <span aria-hidden style={{ fontSize: 14, lineHeight: 1 }}>
+        📖
+      </span>
+      {count} {count === 1 ? 'note' : 'notes'}
+    </button>
   );
 }
 
@@ -188,7 +310,7 @@ function SavedToast() {
     <div
       style={{
         position: 'fixed',
-        bottom: 24,
+        bottom: 74,
         right: 24,
         background: '#111827',
         color: '#fff',

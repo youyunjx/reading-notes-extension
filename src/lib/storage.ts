@@ -4,12 +4,14 @@ import type {
   PendingCapture,
   SavedSource,
   Citation,
+  FocusRequest,
 } from './types';
 import { citationHasData, sourceLabel, bookLevelKey } from './citation';
 
 const STORAGE_KEY = 'notes';
 const PENDING_KEY = 'pendingCapture';
 const SOURCES_KEY = 'sources';
+const FOCUS_KEY = 'focusNote';
 
 /** Read all notes, newest first. */
 export async function getNotes(): Promise<Note[]> {
@@ -129,6 +131,34 @@ export function subscribePendingCapture(
   ) => {
     if (areaName !== 'session' || !(PENDING_KEY in changes)) return;
     callback((changes[PENDING_KEY].newValue as PendingCapture | undefined) ?? null);
+  };
+  chrome.storage.onChanged.addListener(listener);
+  return () => chrome.storage.onChanged.removeListener(listener);
+}
+
+// --- Focus request (on-page marker → focus a note in the side panel) ---
+
+export async function setFocus(focus: FocusRequest): Promise<void> {
+  await chrome.storage.session.set({ [FOCUS_KEY]: focus });
+}
+
+export async function getFocus(): Promise<FocusRequest | null> {
+  const result = await chrome.storage.session.get(FOCUS_KEY);
+  return (result[FOCUS_KEY] as FocusRequest | undefined) ?? null;
+}
+
+export async function clearFocus(): Promise<void> {
+  await chrome.storage.session.remove(FOCUS_KEY);
+}
+
+/** Subscribe to focus-request changes (fires with the new value or null). */
+export function subscribeFocus(callback: (focus: FocusRequest | null) => void): () => void {
+  const listener = (
+    changes: { [key: string]: chrome.storage.StorageChange },
+    areaName: string,
+  ) => {
+    if (areaName !== 'session' || !(FOCUS_KEY in changes)) return;
+    callback((changes[FOCUS_KEY].newValue as FocusRequest | undefined) ?? null);
   };
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);

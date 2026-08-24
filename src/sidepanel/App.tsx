@@ -12,11 +12,21 @@ import {
   subscribeSources,
   saveSource,
   importData,
+  getFocus,
+  subscribeFocus,
+  clearFocus,
 } from '../lib/storage';
 import { exportNotesToCsv } from '../lib/exportCsv';
 import { exportBackup, parseBackup } from '../lib/backup';
-import type { Citation, Note, PendingCapture, SavedSource } from '../lib/types';
+import type {
+  Citation,
+  FocusRequest,
+  Note,
+  PendingCapture,
+  SavedSource,
+} from '../lib/types';
 import { SearchBar } from './components/SearchBar';
+import { SourceFilter } from './components/SourceFilter';
 import { NoteCard } from './components/NoteCard';
 import { EmptyState } from './components/EmptyState';
 import { ComposeDraft } from './components/ComposeDraft';
@@ -29,11 +39,16 @@ interface SourceGroup {
   notes: Note[];
 }
 
+/** Stable key identifying a note's source (used for grouping and filtering). */
+function sourceKey(note: Note): string {
+  return note.source.url || note.source.title || 'unknown';
+}
+
 /** Group notes by their source URL, preserving newest-first ordering. */
 function groupBySource(notes: Note[]): SourceGroup[] {
   const groups = new Map<string, SourceGroup>();
   for (const note of notes) {
-    const key = note.source.url || note.source.title || 'unknown';
+    const key = sourceKey(note);
     let group = groups.get(key);
     if (!group) {
       group = {
@@ -63,11 +78,13 @@ function matches(note: Note, q: string): boolean {
 export function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [query, setQuery] = useState('');
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [pending, setPending] = useState<PendingCapture | null>(null);
   const [sources, setSources] = useState<SavedSource[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [focusNoteId, setFocusNoteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const statusTimer = useRef<number | undefined>(undefined);
 
@@ -131,6 +148,29 @@ export function App() {
     return unsubscribe;
   }, []);
 
+  // Respond to a focus request from an on-page marker: filter to that note's
+  // source and scroll/flash the note. Consumed once, then cleared.
+  useEffect(() => {
+    let active = true;
+    const apply = (f: FocusRequest | null) => {
+      if (!active || !f) return;
+      // Clear any active search so the target note is guaranteed to be visible,
+      // then narrow to its source and flag it for scroll/flash.
+      setQuery('');
+      setSelectedSources([f.sourceKey]);
+      setFocusNoteId(f.noteId);
+      void clearFocus();
+    };
+    const unsubscribe = subscribeFocus(apply);
+    getFocus().then((f) => {
+      if (active) apply(f);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
   async function handleSaveDraft(insight: string, citation: Citation) {
     if (!pending) return;
     await addNote({
@@ -181,13 +221,64 @@ export function App() {
     }
   }
 
+  // Distinct sources for the filter dropdown, with a note count each.
+  const sourceOptions = useMemo(() => {
+    const map = new Map<string, { key: string; label: string; count: number }>();
+    for (const note of notes) {
+      const key = sourceKey(note);
+      const existing = map.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        map.set(key, {
+          key,
+          label: note.source.title || note.source.url || 'Untitled source',
+          count: 1,
+        });
+      }
+    }
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [notes]);
+
+  // Drop any selected sources that no longer exist (e.g. their last note was deleted).
+  useEffect(() => {
+    setSelectedSources((prev) => {
+      const valid = prev.filter((k) => sourceOptions.some((s) => s.key === k));
+      return valid.length === prev.length ? prev : valid;
+    });
+  }, [sourceOptions]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return notes;
-    return notes.filter((n) => matches(n, q));
-  }, [notes, query]);
+    return notes.filter((n) => {
+      if (selectedSources.length > 0 && !selectedSources.includes(sourceKey(n))) return false;
+      if (q && !matches(n, q)) return false;
+      return true;
+    });
+  }, [notes, query, selectedSources]);
+
+  function toggleSource(key: string) {
+    setSelectedSources((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  }
 
   const groups = useMemo(() => groupBySource(filtered), [filtered]);
+
+  // Scroll to and briefly flash the focused note once it's rendered.
+  useEffect(() => {
+    if (!focusNoteId) return;
+    const raf = requestAnimationFrame(() => {
+      document
+        .getElementById(`rn-note-${focusNoteId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    const clear = window.setTimeout(() => setFocusNoteId(null), 2200);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(clear);
+    };
+  }, [focusNoteId, filtered]);
 
   async function handleDelete(id: string) {
     await deleteNote(id);
@@ -260,6 +351,15 @@ export function App() {
         {status && <div className="toolbar-status">{status}</div>}
 
         <SearchBar value={query} onChange={setQuery} />
+
+        {sourceOptions.length > 1 && (
+          <SourceFilter
+            options={sourceOptions}
+            selected={selectedSources}
+            onToggle={toggleSource}
+            onClear={() => setSelectedSources([])}
+          />
+        )}
       </header>
 
       {pending && (
@@ -296,6 +396,8 @@ export function App() {
                   key={note.id}
                   note={note}
                   sources={sources}
+                  domId={`rn-note-${note.id}`}
+                  flash={focusNoteId === note.id}
                   onDelete={handleDelete}
                   onSaveEdit={handleSaveEdit}
                   onSaveSource={handleSaveSource}

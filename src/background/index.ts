@@ -1,4 +1,4 @@
-import { addNote, setPendingCapture } from '../lib/storage';
+import { addNote, setPendingCapture, setFocus } from '../lib/storage';
 import type { RuntimeMessage, RuntimeResponse } from '../lib/messages';
 import type { NoteSource } from '../lib/types';
 
@@ -56,20 +56,40 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === 'OPEN_SIDE_PANEL') {
-      const windowId = sender.tab?.windowId;
-      if (windowId != null) {
-        chrome.sidePanel
-          .open({ windowId })
-          .then(() => sendResponse({ ok: true }))
-          .catch((err) =>
-            sendResponse({ ok: false, error: err?.message ?? String(err) }),
-          );
-        return true;
+      // Call open() synchronously to preserve the click's user gesture.
+      const opening = openPanel(sender);
+      if (!opening) {
+        sendResponse({ ok: false, error: 'No tab/window to open side panel in' });
+        return false;
       }
-      sendResponse({ ok: false, error: 'No window to open side panel in' });
+      opening
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => sendResponse({ ok: false, error: err?.message ?? String(err) }));
+      return true;
+    }
+
+    if (message.type === 'FOCUS_NOTE') {
+      // Open the panel FIRST, synchronously, so the user gesture is preserved.
+      openPanel(sender)?.catch((err) =>
+        console.warn('[Reading Notes] sidePanel.open failed:', err),
+      );
+      // Record the focus request independently; the side panel reads it on open.
+      void setFocus({ ...message.payload, at: Date.now() });
+      sendResponse({ ok: true });
       return false;
     }
 
     return false;
   },
 );
+
+/** Open the side panel for the message sender's tab/window. Returns the open()
+ *  promise, or null if there's nowhere to open it. Must be called synchronously
+ *  within the message handler to keep the user gesture valid. */
+function openPanel(sender: chrome.runtime.MessageSender): Promise<void> | null {
+  if (sender.tab?.id != null) return chrome.sidePanel.open({ tabId: sender.tab.id });
+  if (sender.tab?.windowId != null) {
+    return chrome.sidePanel.open({ windowId: sender.tab.windowId });
+  }
+  return null;
+}

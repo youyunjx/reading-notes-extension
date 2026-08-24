@@ -10,6 +10,13 @@ source**. Everything is stored locally on your machine and browsed from a side p
   restrictions.
 - **Add your insight** — type your own words in an inline composer (⌘/Ctrl + Enter to save).
 - **Records the source** — each note keeps the page title, URL, and favicon.
+- **On-page flag** — when you revisit a page you've already noted, a small "📖 N notes"
+  badge appears in the corner (click it to open the side panel). Computed entirely from
+  local storage — no network.
+- **Inline markers** — a small 📝 icon appears right after each quoted passage on the page;
+  click it to open the side panel filtered to that source and jump to the note. (Best-effort:
+  it locates the quote by text, so it may not appear if the page markup changed or renders
+  text on a canvas.)
 - **Bibliographic citations** — attach author, editor, book name, chapter, page, publisher,
   and year to any note. **Save a book once and reuse it**: pick it from the “Reuse a saved
   source” dropdown to auto-fill the book-level fields on later notes (just update chapter/page).

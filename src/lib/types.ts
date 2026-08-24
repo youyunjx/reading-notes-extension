@@ -20,6 +20,13 @@ export interface Citation {
   year: string;
 }
 
+/** A request (from an on-page marker) to focus a specific note in the side panel. */
+export interface FocusRequest {
+  noteId: string;
+  sourceKey: string;
+  at: number;
+}
+
 /** A reusable book-level citation the user can apply to many notes. */
 export interface SavedSource {
   id: string;

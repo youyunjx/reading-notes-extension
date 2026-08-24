@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Citation, SavedSource } from '../lib/types';
+import type { RuntimeResponse } from '../lib/messages';
 import { getSources } from '../lib/storage';
 import { applySourceToCitation, citationHasData, emptyCitation, sourceLabel } from '../lib/citation';
 
 interface Props {
   anchor: { x: number; y: number };
   quote: string;
-  onSave: (insight: string, citation?: Citation) => void;
+  onSave: (insight: string, citation?: Citation) => Promise<RuntimeResponse>;
   onCancel: () => void;
 }
 
@@ -16,6 +17,7 @@ const CARD_WIDTH = 320;
 export function Composer({ anchor, quote, onSave, onCancel }: Props) {
   const [insight, setInsight] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [sources, setSources] = useState<SavedSource[]>([]);
   const [citation, setCitation] = useState<Citation>(emptyCitation);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +40,13 @@ export function Composer({ anchor, quote, onSave, onCancel }: Props) {
   async function submit() {
     if (saving) return;
     setSaving(true);
-    onSave(insight, citationHasData(citation) ? citation : undefined);
+    setError(null);
+    const res = await onSave(insight, citationHasData(citation) ? citation : undefined);
+    // On success the composer is unmounted by the parent; only handle failure.
+    if (!res.ok) {
+      setSaving(false);
+      setError(res.error || 'Could not save. Please try again.');
+    }
   }
 
   const selectStyle: React.CSSProperties = {
@@ -145,6 +153,21 @@ export function Composer({ anchor, quote, onSave, onCancel }: Props) {
         {citationHasData(citation) && (
           <div style={{ marginTop: 6, fontSize: 11, color: '#4F46E5', fontWeight: 600 }}>
             ✓ {sourceLabel(citation)}
+          </div>
+        )}
+        {error && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '6px 8px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 6,
+              fontSize: 12,
+              color: '#b91c1c',
+            }}
+          >
+            {error}
           </div>
         )}
       </div>

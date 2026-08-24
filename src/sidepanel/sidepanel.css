@@ -140,6 +140,120 @@ body {
   font-size: 13px;
 }
 
+.source-filter {
+  position: relative;
+  margin-top: 8px;
+}
+
+.source-filter-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.source-filter-button:hover {
+  border-color: var(--brand);
+}
+
+.source-filter-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-filter-caret {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.source-filter-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.source-filter-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.source-filter-clear {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.source-filter-clear:hover {
+  text-decoration: underline;
+}
+
+.source-filter-options {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.source-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.source-filter-option:hover {
+  background: var(--bg);
+}
+
+.source-filter-option input {
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--brand);
+}
+
+.source-filter-option-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-filter-option-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
 /* Compose draft (right-click capture awaiting an insight) */
 .compose-draft {
   margin: 12px 12px 0;
@@ -372,6 +486,22 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px;
+}
+
+@keyframes rn-flash {
+  0%,
+  60% {
+    background: var(--brand-weak);
+    border-color: var(--brand);
+  }
+  100% {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+}
+
+.note--flash {
+  animation: rn-flash 2s ease;
 }
 
 .note blockquote {

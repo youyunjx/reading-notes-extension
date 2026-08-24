@@ -6,6 +6,10 @@ import { CitationFields } from './CitationFields';
 interface Props {
   note: Note;
   sources: SavedSource[];
+  /** DOM id for scroll-to-note targeting. */
+  domId?: string;
+  /** Briefly highlight the card (e.g. when focused from an on-page marker). */
+  flash?: boolean;
   onDelete: (id: string) => void;
   onSaveEdit: (
     id: string,
@@ -27,6 +31,8 @@ function formatDate(ts: number): string {
 export function NoteCard({
   note,
   sources,
+  domId,
+  flash,
   onDelete,
   onSaveEdit,
   onSaveSource,
@@ -94,7 +100,7 @@ export function NoteCard({
   const citationText = note.citation ? formatCitation(note.citation) : '';
 
   return (
-    <div className="note">
+    <div className={`note${flash ? ' note--flash' : ''}`} id={domId}>
       <blockquote>{note.quote}</blockquote>
       <p className={`insight${note.insight ? '' : ' empty'}`}>
         {note.insight || 'No insight yet — click Edit to add one.'}
