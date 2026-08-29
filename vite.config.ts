@@ -14,6 +14,13 @@ export default defineConfig({
     // the shipped code free of any fetch() call — reinforcing the fully-offline
     // guarantee (nothing in the extension ever reaches the network).
     modulePreload: false,
+    rollupOptions: {
+      input: {
+        // Standalone extension page (not referenced as a manifest entry point,
+        // so it needs to be an explicit build input).
+        pdfviewer: 'src/pdfviewer/index.html',
+      },
+    },
   },
   server: {
     port: 5173,

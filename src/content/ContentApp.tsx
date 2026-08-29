@@ -223,9 +223,17 @@ export function ContentApp() {
     };
   }, [pageNotes, onMarkerClick]);
 
+  // Corner badge: open the side panel filtered to this page's source (no
+  // specific note). Falls back to a plain open if we somehow have no notes.
   const openSidePanel = useCallback(() => {
-    void sendMessage({ type: 'OPEN_SIDE_PANEL' });
-  }, []);
+    const first = pageNotes[0];
+    if (first) {
+      const sourceKey = first.source.url || first.source.title || 'unknown';
+      void sendMessage({ type: 'FOCUS_NOTE', payload: { noteId: '', sourceKey } });
+    } else {
+      void sendMessage({ type: 'OPEN_SIDE_PANEL' });
+    }
+  }, [pageNotes]);
 
   const openComposer = useCallback(() => {
     if (buttonAnchor) setComposerAnchor(buttonAnchor);

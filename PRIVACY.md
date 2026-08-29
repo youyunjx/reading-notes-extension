@@ -18,9 +18,13 @@ only what you choose to capture:
 
 ## Where the data goes
 
-Nowhere. There are **no servers, no accounts, and no analytics**. The extension makes **no
-network requests** of its own. Your notes never leave your computer unless *you* explicitly
-export them (CSV or JSON) to a file you control.
+Nowhere. There are **no servers, no accounts, and no analytics**. Your notes never leave
+your computer unless *you* explicitly export them (CSV or JSON) to a file you control.
+
+The extension issues exactly one kind of network request: when you open a PDF, its built-in
+PDF viewer **downloads that PDF from the URL you navigated to** — the same file the browser
+would have fetched anyway. That request goes only to that file's own server and contains
+none of your notes. Local (`file://`) PDFs involve no network at all.
 
 ## What the extension does NOT do
 
@@ -33,11 +37,14 @@ export them (CSV or JSON) to a file you control.
 ## Permissions
 
 - **storage** — save your notes on your device.
-- **activeTab / host access** — read the text you select and the current page's title/URL so
-  a note can record its source.
+- **activeTab / host access (`<all_urls>`, `file:///*`)** — read the text you select and the
+  current page's title/URL so a note can record its source, and load PDFs in the annotating
+  viewer. File access additionally requires you to enable "Allow access to file URLs".
 - **contextMenus** — add the right-click "Save selection as reading note" option.
 - **sidePanel** — show your notes in the browser side panel.
 - **downloads** — write CSV / JSON export files when you ask for them.
+- **webNavigation** — detect PDF page loads so they can open in the annotating PDF viewer
+  (Chrome's built-in viewer cannot be annotated by extensions).
 
 ## Contact
 

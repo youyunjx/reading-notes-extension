@@ -1,8 +1,33 @@
-import { addNote, setPendingCapture, setFocus } from '../lib/storage';
+import { addNote, setPendingCapture, setFocus, isPdfViewerEnabled } from '../lib/storage';
 import type { RuntimeMessage, RuntimeResponse } from '../lib/messages';
 import type { NoteSource } from '../lib/types';
 
 const CONTEXT_MENU_ID = 'save-selection-as-note';
+
+// --- PDF interception -------------------------------------------------------
+// Chrome's built-in PDF viewer is closed to extensions, so PDFs can't be
+// highlighted there. Redirect PDF navigations to our own PDF.js-based viewer,
+// which renders a real text layer we can select and highlight.
+
+const PDF_URL_RE = /\.pdf(?:[?#]|$)/i;
+
+function viewerUrlFor(fileUrl: string): string {
+  return `${chrome.runtime.getURL('src/pdfviewer/index.html')}?file=${encodeURIComponent(fileUrl)}`;
+}
+
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  if (details.frameId !== 0) return; // top-level navigations only
+  const url = details.url;
+  // Never intercept our own pages (avoids a redirect loop).
+  if (url.startsWith(chrome.runtime.getURL(''))) return;
+  if (!PDF_URL_RE.test(url)) return;
+  if (!(await isPdfViewerEnabled())) return;
+  try {
+    await chrome.tabs.update(details.tabId, { url: viewerUrlFor(url) });
+  } catch (err) {
+    console.warn('[Reading Notes] PDF redirect failed:', err);
+  }
+});
 
 // Clicking the toolbar icon opens the side panel on the current tab.
 chrome.runtime.onInstalled.addListener(() => {

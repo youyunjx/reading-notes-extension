@@ -12,6 +12,7 @@ const STORAGE_KEY = 'notes';
 const PENDING_KEY = 'pendingCapture';
 const SOURCES_KEY = 'sources';
 const FOCUS_KEY = 'focusNote';
+const PDF_VIEWER_KEY = 'pdfViewerEnabled';
 
 /** Read all notes, newest first. */
 export async function getNotes(): Promise<Note[]> {
@@ -159,6 +160,31 @@ export function subscribeFocus(callback: (focus: FocusRequest | null) => void): 
   ) => {
     if (areaName !== 'session' || !(FOCUS_KEY in changes)) return;
     callback((changes[FOCUS_KEY].newValue as FocusRequest | undefined) ?? null);
+  };
+  chrome.storage.onChanged.addListener(listener);
+  return () => chrome.storage.onChanged.removeListener(listener);
+}
+
+// --- Settings ---
+
+/** Whether PDFs should open in our annotating viewer (default: on). */
+export async function isPdfViewerEnabled(): Promise<boolean> {
+  const result = await chrome.storage.local.get(PDF_VIEWER_KEY);
+  return (result[PDF_VIEWER_KEY] as boolean | undefined) ?? true;
+}
+
+export async function setPdfViewerEnabled(enabled: boolean): Promise<void> {
+  await chrome.storage.local.set({ [PDF_VIEWER_KEY]: enabled });
+}
+
+/** Subscribe to the PDF-viewer setting. */
+export function subscribePdfViewerEnabled(cb: (enabled: boolean) => void): () => void {
+  const listener = (
+    changes: { [key: string]: chrome.storage.StorageChange },
+    areaName: string,
+  ) => {
+    if (areaName !== 'local' || !(PDF_VIEWER_KEY in changes)) return;
+    cb((changes[PDF_VIEWER_KEY].newValue as boolean | undefined) ?? true);
   };
   chrome.storage.onChanged.addListener(listener);
   return () => chrome.storage.onChanged.removeListener(listener);

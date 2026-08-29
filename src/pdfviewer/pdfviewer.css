@@ -1,0 +1,252 @@
+:root {
+  --bg: #525659;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --brand: #4f46e5;
+  --brand-weak: #eef2ff;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+}
+
+/* Toolbar */
+.pdf-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #323639;
+  color: #f3f4f6;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.pdf-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45vw;
+}
+
+.pdf-toolbar .spacer {
+  flex: 1;
+}
+
+.pdf-btn {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: transparent;
+  color: #f3f4f6;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pdf-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pdf-hint {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+/* Pages */
+.pdf-pages {
+  padding: 20px 0 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdf-page {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.pdf-page canvas {
+  display: block;
+}
+
+/* The text layer's geometry comes from PDF.js (pdf_viewer.css + the
+   --total-scale-factor variable set at render time). Only set stacking here —
+   overriding its size/position would break selection alignment. */
+.pdf-page .textLayer {
+  z-index: 2;
+}
+
+/* Highlight overlay, painted under the transparent text layer so text stays
+   selectable. Clicks are hit-tested on the page wrapper instead. */
+.pdf-highlights {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pdf-highlight {
+  position: absolute;
+  background: rgba(253, 224, 71, 0.5);
+  border-bottom: 2px solid rgba(217, 119, 6, 0.8);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.pdf-page-label {
+  position: absolute;
+  top: 6px;
+  right: -46px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+/* Status / errors */
+.pdf-status {
+  color: #e5e7eb;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.pdf-status a {
+  color: #a5b4fc;
+}
+
+/* Selection composer */
+.pdf-composer {
+  position: fixed;
+  width: 340px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.pdf-composer-body {
+  padding: 12px 14px;
+}
+
+.pdf-composer-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.pdf-composer blockquote {
+  margin: 0;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-left: 3px solid var(--brand);
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 90px;
+  overflow-y: auto;
+}
+
+.pdf-composer textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+
+.pdf-composer textarea:focus {
+  border-color: var(--brand);
+}
+
+.pdf-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.pdf-composer-actions .btn {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: transparent;
+  color: #374151;
+}
+
+.pdf-composer-actions .btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+/* Floating "add note" button near a selection */
+.pdf-add-btn {
+  position: fixed;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+  z-index: 50;
+}
+
+.pdf-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #111827;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 60;
+}

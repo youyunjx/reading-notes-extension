@@ -3,6 +3,9 @@ export interface NoteSource {
   url: string;
   title: string;
   faviconUrl?: string;
+  /** 1-based page number, when the note came from a PDF. Used to re-anchor the
+   *  highlight when the PDF is reopened. */
+  pdfPage?: number;
 }
 
 /**

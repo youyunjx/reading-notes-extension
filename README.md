@@ -17,6 +17,15 @@ source**. Everything is stored locally on your machine and browsed from a side p
   click it to open the side panel filtered to that source and jump to the note. (Best-effort:
   it locates the quote by text, so it may not appear if the page markup changed or renders
   text on a canvas.)
+
+- **PDF annotation** — PDFs open in a built-in PDF viewer (powered by a locally bundled
+  PDF.js) where you can **select text → add a comment → see it highlighted in yellow**, and
+  **click a highlight to open that note**. Highlights are re-anchored by page number + text,
+  so they reappear next time you open the file.
+
+> **Restricted pages:** the in-page UI can't appear on `chrome://` pages, the Chrome Web
+> Store, or other extensions' pages — Chrome does not allow content scripts there. You can
+> still capture with **right-click → “Save selection as reading note”**.
 - **Bibliographic citations** — attach author, editor, book name, chapter, page, publisher,
   and year to any note. **Save a book once and reuse it**: pick it from the “Reuse a saved
   source” dropdown to auto-fill the book-level fields on later notes (just update chapter/page).
@@ -28,27 +37,35 @@ source**. Everything is stored locally on your machine and browsed from a side p
   folder) and import it back later or into a reinstalled extension.
 - **Local & private** — data lives in `chrome.storage.local`; no account, no backend.
 
-## Safety & offline guarantee
+## Safety & privacy
 
-This extension runs **fully offline** and never sends your data anywhere:
+**Your notes never leave your device.** There is no account, no backend, and no analytics.
 
-- **No network calls in the shipped code** — no `fetch`, `XMLHttpRequest`, `WebSocket`, or
-  `sendBeacon`. React is bundled locally; Vite's module-preload `fetch` polyfill is disabled
-  (`build.modulePreload: false`). The only external URL in the bundle is React's
-  error-decoder link (`reactjs.org`), which is a static string in an error message and is
-  never requested.
-- **No external resources** — no CDNs, web fonts, or remote images. Source favicons are
-  rendered as local letter-avatars rather than fetched from the source site (fetching them
-  would require network and would leak to those sites that you're reviewing the note).
-- **On-device storage only** — `chrome.storage.local`, never `chrome.storage.sync`, so
-  notes never leave your machine.
-- **Minimal permissions** — `storage`, `activeTab`, `contextMenus`, `sidePanel`. There are
-  **no** `host_permissions`, **no** `externally_connectable`, and no relaxed
-  `content_security_policy`, so Chrome's default strict MV3 CSP applies (remote code and
-  `eval` are blocked).
-- The content script runs on all pages only so it can detect text selections; it reads the
-  selection, page title, and URL locally and passes them to the extension's own background
-  worker — nothing is transmitted off-device.
+- **No telemetry, no third parties** — the extension never sends your notes, quotes, URLs,
+  or any other data anywhere. Nothing is sold, shared, or uploaded.
+- **No external resources** — no CDNs, web fonts, or remote images. React and PDF.js are
+  bundled locally. Source favicons are rendered as local letter-avatars rather than fetched
+  from the source site (which would leak that you're reviewing that note).
+- **On-device storage only** — `chrome.storage.local`, never `chrome.storage.sync`.
+- **Strict CSP** — no relaxed `content_security_policy`, so Chrome's default MV3 policy
+  applies (remote code and `eval` are blocked).
+- The content script runs on pages only to detect text selections; it reads the selection,
+  page title, and URL locally and passes them to the extension's own background worker.
+
+### The one network request the extension makes
+
+The **PDF viewer downloads the PDF you opened**, from the exact URL you navigated to — the
+same file Chrome would have fetched for its own viewer. That's the only request the
+extension itself issues, it goes only to that file's own server, and it carries none of your
+notes. Local PDFs (`file://`) and everything else in the extension involve **no network at
+all**.
+
+### Permissions
+
+`storage`, `activeTab`, `contextMenus`, `sidePanel`, `downloads` (CSV/JSON export),
+`webNavigation` (to route PDFs to the annotating viewer), and host access to
+`<all_urls>` + `file:///*` (to read selections and load PDFs; `file://` also requires you to
+enable *"Allow access to file URLs"*).
 
 The only outbound navigation happens when **you click a source link** in the side panel,
 which opens that page in a new tab — an explicit, user-initiated action.
@@ -328,6 +345,24 @@ node scripts/generate-icons.mjs
    panel opens with a **New note** form — your quote is already filled in and the cursor is
    in the insight box, so you can type your thoughts and **Save** right away. This path works
    even on pages where the floating button can't appear.
+
+### Annotating PDFs
+
+Chrome's built-in PDF viewer is closed to extensions, so PDFs open in Reading Notes' own
+viewer (powered by a locally bundled PDF.js). There you can:
+
+1. **Select text** in the PDF → click **✎ Add note**.
+2. **Type your comment** → **Save note** (or ⌘/Ctrl + Enter). The page number is recorded.
+3. The passage is **highlighted in yellow**. Hover to see your comment; **click the
+   highlight** to open the side panel and jump to that note.
+
+Highlights are re-anchored by **page number + quoted text**, so they come back every time you
+reopen the file.
+
+- **Local PDFs (`file://`)** additionally require enabling **"Allow access to file URLs"** on
+  the Reading Notes card in `chrome://extensions`.
+- **To go back to Chrome's native PDF viewer**, untick **"Annotate PDFs in Reading Notes
+  viewer"** at the top of the side panel.
 
 ### Adding book/citation details
 

@@ -15,6 +15,9 @@ import {
   getFocus,
   subscribeFocus,
   clearFocus,
+  isPdfViewerEnabled,
+  setPdfViewerEnabled,
+  subscribePdfViewerEnabled,
 } from '../lib/storage';
 import { exportNotesToCsv } from '../lib/exportCsv';
 import { exportBackup, parseBackup } from '../lib/backup';
@@ -85,6 +88,7 @@ export function App() {
   const [sources, setSources] = useState<SavedSource[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [focusNoteId, setFocusNoteId] = useState<string | null>(null);
+  const [pdfViewer, setPdfViewer] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const statusTimer = useRef<number | undefined>(undefined);
 
@@ -148,8 +152,16 @@ export function App() {
     return unsubscribe;
   }, []);
 
-  // Respond to a focus request from an on-page marker: filter to that note's
-  // source and scroll/flash the note. Consumed once, then cleared.
+  // PDF viewer preference.
+  useEffect(() => {
+    isPdfViewerEnabled().then(setPdfViewer);
+    return subscribePdfViewerEnabled(setPdfViewer);
+  }, []);
+
+  // Respond to a focus request from an on-page marker or the corner badge:
+  // filter to that source and (if a specific note was given) scroll/flash it.
+  // Consumed once, then cleared. Re-seeds when the panel regains visibility so a
+  // request that lands just as the panel opens isn't missed.
   useEffect(() => {
     let active = true;
     const apply = (f: FocusRequest | null) => {
@@ -158,16 +170,22 @@ export function App() {
       // then narrow to its source and flag it for scroll/flash.
       setQuery('');
       setSelectedSources([f.sourceKey]);
-      setFocusNoteId(f.noteId);
+      if (f.noteId) setFocusNoteId(f.noteId);
       void clearFocus();
     };
     const unsubscribe = subscribeFocus(apply);
-    getFocus().then((f) => {
-      if (active) apply(f);
-    });
+    const seed = () => getFocus().then((f) => apply(f));
+    seed();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void seed();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
     return () => {
       active = false;
       unsubscribe();
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
     };
   }, []);
 
@@ -240,8 +258,11 @@ export function App() {
     return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
   }, [notes]);
 
-  // Drop any selected sources that no longer exist (e.g. their last note was deleted).
+  // Drop any selected sources that no longer exist (e.g. their last note was
+  // deleted). Skip while notes are still loading (empty options) so a filter set
+  // by a focus request isn't wiped before its source appears.
   useEffect(() => {
+    if (sourceOptions.length === 0) return;
     setSelectedSources((prev) => {
       const valid = prev.filter((k) => sourceOptions.some((s) => s.key === k));
       return valid.length === prev.length ? prev : valid;
@@ -349,6 +370,15 @@ export function App() {
         </div>
 
         {status && <div className="toolbar-status">{status}</div>}
+
+        <label className="pdf-toggle" title="Open PDFs in the Reading Notes viewer so you can highlight and annotate them">
+          <input
+            type="checkbox"
+            checked={pdfViewer}
+            onChange={(e) => void setPdfViewerEnabled(e.target.checked)}
+          />
+          <span>Annotate PDFs in Reading Notes viewer</span>
+        </label>
 
         <SearchBar value={query} onChange={setQuery} />
 

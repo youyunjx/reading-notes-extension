@@ -52,5 +52,23 @@ export default defineManifest({
   side_panel: {
     default_path: 'src/sidepanel/index.html',
   },
-  permissions: ['storage', 'activeTab', 'contextMenus', 'sidePanel', 'downloads'],
+  permissions: [
+    'storage',
+    'activeTab',
+    'contextMenus',
+    'sidePanel',
+    'downloads',
+    // Used to redirect PDF navigations to our own annotating viewer (Chrome's
+    // built-in PDF viewer is closed to extensions, so it can't be highlighted).
+    'webNavigation',
+  ],
+  // file:///* only takes effect if you enable "Allow access to file URLs" on the
+  // extension's card in chrome://extensions — needed for local PDFs.
+  host_permissions: ['<all_urls>', 'file:///*'],
+  web_accessible_resources: [
+    {
+      resources: ['src/pdfviewer/index.html', 'assets/*'],
+      matches: ['<all_urls>'],
+    },
+  ],
 });
