@@ -300,17 +300,28 @@ dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 
 - **Single purpose:** "Take reading notes: save selected text with the user's insight, source,
   and citation, viewable in a side panel."
-- **Permission justifications:**
-  - *host access `<all_urls>` / activeTab* — read the text the user selects and the page's
-    title/URL so a note can record where it came from.
+- **Permission justifications** (paste these into the matching boxes):
+  - *host access `<all_urls>`* — the extension reads the text the user selects and the page's
+    title/URL so a note can record where it came from, and loads the PDF the user opened into
+    the annotating viewer. It runs on all sites because the user may take reading notes on any
+    page.
+  - *`file:///*`* — lets the user annotate PDFs stored on their own computer. Only active if
+    they enable "Allow access to file URLs".
+  - *activeTab* — access the current tab when the user invokes the extension.
   - *storage* — save notes locally on the device.
   - *contextMenus* — the right-click "Save selection as reading note" command.
   - *sidePanel* — display notes in the browser side panel.
   - *downloads* — write CSV/JSON export files when the user requests them.
-- **Data usage:** does **not** collect or transmit user data; nothing is sold or shared.
-  (See `PRIVACY.md`.)
-- **Privacy policy URL:** host `PRIVACY.md` somewhere public — e.g. the raw GitHub URL of this
-  file after you push the repo — and paste that link.
+  - *webNavigation* — detect when a PDF is being opened so it can be routed to the
+    extension's own annotating PDF viewer (Chrome's built-in viewer cannot be annotated by
+    extensions).
+- **Remote code:** *No.* All code, including PDF.js, is bundled in the package. Nothing is
+  fetched or evaluated at runtime.
+- **Data usage:** does **not** collect or transmit user data; nothing is sold or shared. The
+  only network request is the viewer downloading the PDF the user chose to open. (See
+  `PRIVACY.md`.)
+- **Privacy policy URL:**
+  `https://github.com/youyunjx/reading-notes-extension/blob/main/PRIVACY.md`
 
 ### 6. Moving your existing notes to the published version
 

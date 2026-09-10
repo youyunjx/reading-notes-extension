@@ -6,8 +6,9 @@ export default defineManifest({
   name: 'Reading Notes',
   version: pkg.version,
   description: pkg.description,
-  // sidePanel needs Chrome 114+; match_origin_as_fallback needs 119+.
-  minimum_chrome_version: '119',
+  // sidePanel needs Chrome 114+; match_origin_as_fallback needs 119+; the
+  // bundled PDF.js v6 relies on newer platform APIs, so require 120+.
+  minimum_chrome_version: '120',
   // Pins a stable extension ID regardless of which folder it's loaded from, so
   // your saved notes (keyed by extension ID in chrome.storage.local) survive
   // reinstalling or moving the extension. The matching private key is in
