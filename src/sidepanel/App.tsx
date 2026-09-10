@@ -232,7 +232,7 @@ export function App() {
     try {
       await exportBackup();
     } catch (err) {
-      console.error('[Reading Notes] Backup export failed:', err);
+      console.error('[Jot] Backup export failed:', err);
     }
   }
 
@@ -252,7 +252,7 @@ export function App() {
           : 'Nothing new to import (already present).',
       );
     } catch (err) {
-      console.error('[Reading Notes] Import failed:', err);
+      console.error('[Jot] Import failed:', err);
       flashStatus('Import failed — is this a valid backup JSON file?');
     }
   }
@@ -338,7 +338,7 @@ export function App() {
     try {
       await exportNotesToCsv(notes);
     } catch (err) {
-      console.error('[Reading Notes] CSV export failed:', err);
+      console.error('[Jot] CSV export failed:', err);
       alert('Sorry, exporting the CSV failed. Please try again.');
     } finally {
       setExporting(false);
@@ -350,7 +350,7 @@ export function App() {
       <header className="app-header">
         <h1 className="app-title">
           <span aria-hidden>📖</span>
-          <span className="app-title-text">Reading Notes</span>
+          <span className="app-title-text">Jot</span>
           <span className="badge">{notes.length}</span>
         </h1>
 
@@ -389,13 +389,13 @@ export function App() {
 
         {status && <div className="toolbar-status">{status}</div>}
 
-        <label className="pdf-toggle" title="Open PDFs in the Reading Notes viewer so you can highlight and annotate them">
+        <label className="pdf-toggle" title="Open PDFs in the Jot viewer so you can highlight and annotate them">
           <input
             type="checkbox"
             checked={pdfViewer}
             onChange={(e) => void setPdfViewerEnabled(e.target.checked)}
           />
-          <span>Annotate PDFs in Reading Notes viewer</span>
+          <span>Annotate PDFs in Jot viewer</span>
         </label>
 
         <SearchBar value={query} onChange={setQuery} />

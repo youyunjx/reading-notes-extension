@@ -98,7 +98,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   try {
     await chrome.tabs.update(details.tabId, { url: viewerUrlFor(url) });
   } catch (err) {
-    console.warn('[Reading Notes] PDF redirect failed:', err);
+    console.warn('[Jot] PDF redirect failed:', err);
   }
 });
 
@@ -106,7 +106,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ID,
-    title: 'Save selection as reading note',
+    title: 'Save selection as a note',
     contexts: ['selection'],
   });
 });
@@ -114,7 +114,7 @@ chrome.runtime.onInstalled.addListener(() => {
 // Open the side panel when the action (toolbar) icon is clicked.
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch((err) => console.error('[Reading Notes] setPanelBehavior failed', err));
+  .catch((err) => console.error('[Jot] setPanelBehavior failed', err));
 
 // Context-menu path: stash the selection as a "pending capture" and open the
 // side panel, where the user types their insight and saves. We open the panel
@@ -176,7 +176,7 @@ chrome.runtime.onMessage.addListener(
     if (message.type === 'FOCUS_NOTE') {
       // Open the panel FIRST, synchronously, so the user gesture is preserved.
       openPanel(sender)?.catch((err) =>
-        console.warn('[Reading Notes] sidePanel.open failed:', err),
+        console.warn('[Jot] sidePanel.open failed:', err),
       );
       // Record the focus request independently; the side panel reads it on open.
       void setFocus({ ...message.payload, at: Date.now() });

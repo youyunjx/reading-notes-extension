@@ -67,7 +67,7 @@ export function PdfViewer() {
         const loaded = await task.promise;
         if (cancelled) return;
         setDoc(loaded);
-        document.title = `${fileName} — Reading Notes`;
+        document.title = `${fileName} — Jot`;
       } catch (err) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
@@ -209,7 +209,7 @@ export function PdfViewer() {
           <p>{error}</p>
           <p>
             If this is a local file (<code>file://</code>), enable{' '}
-            <em>“Allow access to file URLs”</em> on the Reading Notes card in{' '}
+            <em>“Allow access to file URLs”</em> on the Jot card in{' '}
             <code>chrome://extensions</code>.
           </p>
           <p>
@@ -301,7 +301,7 @@ export function PdfViewer() {
       {notes.length > 0 && (
         <button
           className="pdf-note-flag"
-          title={`${notes.length} note${notes.length === 1 ? '' : 's'} in this PDF — open Reading Notes`}
+          title={`${notes.length} note${notes.length === 1 ? '' : 's'} in this PDF — open Jot`}
           onClick={() =>
             void sendMessage({
               type: 'FOCUS_NOTE',
@@ -361,7 +361,7 @@ function Toolbar({
       <button
         className="pdf-btn"
         onClick={() => void sendMessage({ type: 'OPEN_SIDE_PANEL' })}
-        title="Open the Reading Notes side panel"
+        title="Open the Jot side panel"
       >
         Notes
       </button>

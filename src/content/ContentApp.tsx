@@ -9,7 +9,7 @@ import type { MarkTarget } from './highlighter';
 import type { RuntimeMessage } from '../lib/messages';
 import type { Citation, Note, NoteSource } from '../lib/types';
 
-const HOST_ID = 'reading-notes-root';
+const HOST_ID = 'jot-root';
 const MIN_SELECTION_LENGTH = 1;
 /** How long a cached selection stays usable after it was last seen (ms). */
 const SELECTION_CACHE_TTL = 800;
@@ -260,7 +260,7 @@ export function ContentApp() {
         payload: { quote, insight, source: getPageSource(), citation },
       });
       if (!res.ok) {
-        console.error('[Reading Notes] Failed to save note:', res.error);
+        console.error('[Jot] Failed to save note:', res.error);
         return res;
       }
       closeAll();
@@ -297,7 +297,7 @@ function PageNoteFlag({ count, onClick }: { count: number; onClick: () => void }
   return (
     <button
       onClick={onClick}
-      title={`${count} note${count === 1 ? '' : 's'} on this page — open Reading Notes`}
+      title={`${count} note${count === 1 ? '' : 's'} on this page — open Jot`}
       style={{
         position: 'fixed',
         bottom: 20,

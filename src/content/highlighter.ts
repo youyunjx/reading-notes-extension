@@ -5,7 +5,7 @@
 //  - markers are re-applied whenever notes or the URL change.
 
 const MARKER_ATTR = 'data-rn-note-marker';
-const HOST_ID = 'reading-notes-root';
+const HOST_ID = 'jot-root';
 
 export interface MarkTarget {
   id: string;
@@ -74,8 +74,8 @@ function makeMarker(target: MarkTarget, onClick: (t: MarkTarget) => void): HTMLS
   const marker = document.createElement('span');
   marker.setAttribute(MARKER_ATTR, target.id);
   marker.setAttribute('role', 'button');
-  marker.setAttribute('aria-label', 'View reading note');
-  marker.title = 'View this reading note';
+  marker.setAttribute('aria-label', 'View note');
+  marker.title = 'View this note';
   marker.textContent = '📝';
   Object.assign(marker.style, {
     cursor: 'pointer',

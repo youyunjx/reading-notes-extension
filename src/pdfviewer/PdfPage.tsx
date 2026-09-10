@@ -157,8 +157,8 @@ export function PdfPage({
           ...r,
           noteId: note.id,
           title: note.insight.trim()
-            ? `Reading note: ${note.insight.trim()}`
-            : 'Reading note — click to open',
+            ? `Note: ${note.insight.trim()}`
+            : 'Note — click to open',
         });
       }
     }

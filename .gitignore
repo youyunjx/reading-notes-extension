@@ -12,8 +12,10 @@ dist/
 
 # Personal data / recovery artifacts — never commit (repo is public)
 .recovery/
+jot-backup*.json
 reading-notes-backup*.json
 
 # Web Store packaging artifacts
 .package/
+jot-v*.zip
 reading-notes-v*.zip

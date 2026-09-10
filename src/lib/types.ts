@@ -38,7 +38,7 @@ export interface SavedSource {
   createdAt: number;
 }
 
-/** A single reading note: a quoted passage plus the user's own insight. */
+/** A single note: a quoted passage plus the user's own insight. */
 export interface Note {
   id: string;
   /** The selected text captured from the page. */

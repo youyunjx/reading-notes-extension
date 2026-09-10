@@ -3,7 +3,7 @@
 // place or cleaned — which is what makes it survive PC reboots.
 //
 // Run with:  npm run install:local   (it builds first, then copies)
-// Override the destination with:  READING_NOTES_INSTALL_DIR=... npm run install:local
+// Override the destination with:  JOT_INSTALL_DIR=... npm run install:local
 import { cpSync, existsSync, rmSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
@@ -11,9 +11,13 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = join(__dirname, '..', 'dist');
+// NOTE: the folder name is intentionally left as "ReadingNotesExtension" even
+// though the app is now called Jot. Chrome loads the unpacked extension from
+// this exact path; pointing at a new folder would mean removing the old entry
+// first, and removing an extension makes Chrome delete its stored notes. Keeping
+// the path lets an existing install just hit Refresh and pick up the new name.
 const target =
-  process.env.READING_NOTES_INSTALL_DIR ||
-  join(homedir(), 'ReadingNotesExtension');
+  process.env.JOT_INSTALL_DIR || join(homedir(), 'ReadingNotesExtension');
 
 if (!existsSync(distDir)) {
   console.error('\n✗ dist/ not found. Run `npm run build` first.\n');
@@ -28,7 +32,7 @@ mkdirSync(target, { recursive: true });
 cpSync(distDir, target, { recursive: true });
 
 console.log(`
-✓ Reading Notes installed to a permanent folder:
+✓ Jot installed to a permanent folder:
 
     ${target}
 
@@ -39,5 +43,5 @@ First time:
   4. Keep Developer mode ON and do not delete that folder
 
 After updating the code, just run this command again, then click the
-circular refresh arrow on the Reading Notes card in chrome://extensions.
+circular refresh arrow on the Jot card in chrome://extensions.
 `);

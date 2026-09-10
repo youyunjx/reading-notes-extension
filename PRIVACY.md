@@ -1,8 +1,8 @@
-# Privacy Policy — Reading Notes
+# Privacy Policy — Jot
 
 _Last updated: 2026-07-21_
 
-Reading Notes is a browser extension for taking personal reading notes. Your privacy
+Jot is a browser extension for taking personal notes. Your privacy
 is simple to describe: **the extension does not collect, transmit, or share any of your
 data. Everything stays on your own device.**
 
@@ -32,7 +32,7 @@ none of your notes. Local (`file://`) PDFs involve no network at all.
 - It does not sell or share data with third parties.
 - It does not track your browsing.
 - It does not use your data for advertising or any purpose unrelated to its single function
-  (taking reading notes).
+  (taking notes).
 
 ## Permissions
 
@@ -40,7 +40,7 @@ none of your notes. Local (`file://`) PDFs involve no network at all.
 - **activeTab / host access (`<all_urls>`, `file:///*`)** — read the text you select and the
   current page's title/URL so a note can record its source, and load PDFs in the annotating
   viewer. File access additionally requires you to enable "Allow access to file URLs".
-- **contextMenus** — add the right-click "Save selection as reading note" option.
+- **contextMenus** — add the right-click "Save selection as a note" option.
 - **sidePanel** — show your notes in the browser side panel.
 - **downloads** — write CSV / JSON export files when you ask for them.
 - **webNavigation** — detect PDF page loads so they can open in the annotating PDF viewer

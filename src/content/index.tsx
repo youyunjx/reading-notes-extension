@@ -4,7 +4,7 @@ import { ContentApp } from './ContentApp';
 // Mount the UI inside a shadow root so the host page's CSS can never affect it
 // (and vice-versa). A single host element carries both the floating button and
 // the composer card.
-const HOST_ID = 'reading-notes-root';
+const HOST_ID = 'jot-root';
 
 function mount() {
   if (document.getElementById(HOST_ID)) return;

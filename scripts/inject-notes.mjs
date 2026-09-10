@@ -86,4 +86,4 @@ await db.close();
 
 console.log(`✓ Injected ${addedNotes} new note(s) and ${addedSources} source(s).`);
 console.log(`  Total notes now in storage: ${notes.length}`);
-console.log('\nReopen Chrome and open the Reading Notes side panel — they will be there.');
+console.log('\nReopen Chrome and open the Jot side panel — they will be there.');

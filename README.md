@@ -1,7 +1,9 @@
-# Reading Notes — Chrome Extension
+# Jot — Chrome Extension
 
-Take reading notes as you browse: **select any text → add your insight → save it with its
-source**. Everything is stored locally on your machine and browsed from a side panel.
+**The ONE tool to jot down your reading ideas based in Chrome.**
+
+Select any text → add your insight → save it with its source. Everything is stored locally
+on your machine and browsed from a side panel.
 
 - **Select & capture** — highlight text on any page (with the mouse or the keyboard) and a
   floating **Add note** button appears. Works inside embedded frames too, and on any site
@@ -25,7 +27,7 @@ source**. Everything is stored locally on your machine and browsed from a side p
 
 > **Restricted pages:** the in-page UI can't appear on `chrome://` pages, the Chrome Web
 > Store, or other extensions' pages — Chrome does not allow content scripts there. You can
-> still capture with **right-click → “Save selection as reading note”**.
+> still capture with **right-click → “Save selection as a note”**.
 - **Bibliographic citations** — attach author, editor, book name, chapter, page, publisher,
   and year to any note. **Save a book once and reuse it**: pick it from the “Reuse a saved
   source” dropdown to auto-fill the book-level fields on later notes (just update chapter/page).
@@ -115,9 +117,9 @@ You need the project folder (the one containing `package.json`) somewhere easy t
 - If you already have it (for example at `D:\Project\chrome-based_note_taking`), you're set —
   just note that location.
 - If someone sent it to you as a **.zip** file: right-click the zip → **Extract All…** →
-  choose a simple location like `C:\reading-notes` → **Extract**.
+  choose a simple location like `C:\jot` → **Extract**.
 
-For the rest of this guide we'll assume the folder is at `C:\reading-notes`. Substitute your
+For the rest of this guide we'll assume the folder is at `C:\jot`. Substitute your
 actual path wherever you see it.
 
 ### Step 4 — Open a command window inside that folder
@@ -161,17 +163,17 @@ folder inside your project — that's the finished extension.
 3. Three buttons appear on the left. Click **Load unpacked**.
 4. A folder picker opens. Navigate into your project folder and select the **`dist`** folder
    (the one created in Step 6), then click **Select Folder**.
-5. **Reading Notes** now appears in your extensions list. 🎉
+5. **Jot** now appears in your extensions list. 🎉
 
 ### Step 8 — Pin it and try it out
 
 1. Click the **puzzle-piece icon** 🧩 near the top-right of Chrome.
-2. Find **Reading Notes** and click the **pin** icon next to it so it stays on your toolbar.
+2. Find **Jot** and click the **pin** icon next to it so it stays on your toolbar.
 3. Go to any article, **select some text**, click the **✎ Add note** button that pops up,
    type your thought, and save.
-4. Click the **Reading Notes toolbar icon** to open the side panel and see your note.
+4. Click the **Jot toolbar icon** to open the side panel and see your note.
 
-That's it — you're taking reading notes. Your notes are stored on this PC only.
+That's it — you're taking notes. Your notes are stored on this PC only.
 
 ### Troubleshooting
 
@@ -183,7 +185,7 @@ That's it — you're taking reading notes. Your notes are stored on this PC only
 - **"Load unpacked" is greyed out / missing** — you didn't turn on **Developer mode**
   (Step 7.2).
 - **I updated the code and want the new version** — run `npm run build` again, then on
-  `chrome://extensions` click the **circular refresh arrow** on the Reading Notes card.
+  `chrome://extensions` click the **circular refresh arrow** on the Jot card.
 
 ### Using Microsoft Edge instead
 
@@ -220,8 +222,14 @@ C:\Users\<you>\ReadingNotesExtension
 Then load **that** folder once via **Load unpacked** (see Step 7 above). Because it lives
 outside the project, normal rebuilds, `git` operations, and cleanups never touch it.
 
+> **Why is the folder still called `ReadingNotesExtension`?** The app was renamed to Jot, but
+> Chrome loads the unpacked extension from this exact path. Pointing it at a new folder would
+> mean removing the old entry first — and removing an extension makes Chrome **delete its
+> stored notes**. Keeping the path lets an existing install just hit **Refresh** and pick up
+> the new name, with every note intact.
+
 > Set a different location with
-> `READING_NOTES_INSTALL_DIR="D:\Apps\ReadingNotes" npm run install:local`.
+> `JOT_INSTALL_DIR="D:\Apps\Jot" npm run install:local`.
 
 > **PowerShell error `npm.ps1 cannot be loaded because running scripts is disabled`?**
 > That's PowerShell's execution policy blocking npm's script wrapper — nothing to do with
@@ -231,7 +239,7 @@ outside the project, normal rebuilds, `git` operations, and cleanups never touch
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 **To update later:** run `npm run install:local` again, then click the circular refresh
-arrow on the Reading Notes card in `chrome://extensions`.
+arrow on the Jot card in `chrome://extensions`.
 
 ### Your notes are safe across reinstalls
 
@@ -262,7 +270,7 @@ the final **Submit** are steps only you can do (they need your Google account).
 npm run package
 ```
 
-This produces `reading-notes-vX.Y.Z.zip` in the project root — a clean store build with the
+This produces `jot-vX.Y.Z.zip` in the project root — a clean store build with the
 dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 
 ### 2. Create a developer account (one time)
@@ -273,7 +281,7 @@ dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 
 ### 3. Create the item and upload
 
-1. Click **Add new item** → upload the `reading-notes-vX.Y.Z.zip`.
+1. Click **Add new item** → upload the `jot-vX.Y.Z.zip`.
 2. Fill in the **store listing** (suggested text below).
 3. Fill in **Privacy practices** (see below) — required before you can submit.
 4. Choose **Visibility**: **Unlisted** (anyone with the link can install — great for personal
@@ -282,12 +290,12 @@ dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 
 ### 4. Suggested store listing
 
-- **Name:** Reading Notes
+- **Name:** Jot
 - **Summary (≤132 chars):** Select text on any page, add your insight, record the source and
   citation. Private, offline, with CSV/JSON export.
 - **Category:** Productivity
 - **Description:**
-  > Reading Notes lets you capture what matters while you read. Select text on any web page,
+  > Jot lets you capture what matters while you read. Select text on any web page,
   > add your own insight, and it saves the quote with its source (title + URL). Add
   > bibliographic details — author, editor, book, chapter, page, publisher, year — and reuse a
   > saved book across many notes. Browse, search, and edit everything in the side panel, and
@@ -298,18 +306,18 @@ dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 
 ### 5. Privacy practices answers
 
-- **Single purpose:** "Take reading notes: save selected text with the user's insight, source,
+- **Single purpose:** "Take notes: save selected text with the user's insight, source,
   and citation, viewable in a side panel."
 - **Permission justifications** (paste these into the matching boxes):
   - *host access `<all_urls>`* — the extension reads the text the user selects and the page's
     title/URL so a note can record where it came from, and loads the PDF the user opened into
-    the annotating viewer. It runs on all sites because the user may take reading notes on any
+    the annotating viewer. It runs on all sites because the user may take notes on any
     page.
   - *`file:///*`* — lets the user annotate PDFs stored on their own computer. Only active if
     they enable "Allow access to file URLs".
   - *activeTab* — access the current tab when the user invokes the extension.
   - *storage* — save notes locally on the device.
-  - *contextMenus* — the right-click "Save selection as reading note" command.
+  - *contextMenus* — the right-click "Save selection as a note" command.
   - *sidePanel* — display notes in the browser side panel.
   - *downloads* — write CSV/JSON export files when the user requests them.
   - *webNavigation* — detect when a PDF is being opened so it can be routed to the
@@ -355,7 +363,7 @@ node scripts/generate-icons.mjs
 1. On any article, **select some text**. A small **✎ Add note** button appears.
 2. Click it, type your insight, and press **Save note** (or ⌘/Ctrl + Enter).
 3. Click the toolbar icon to open the **side panel** and review all your notes.
-4. You can also **right-click a selection → “Save selection as reading note”**. The side
+4. You can also **right-click a selection → “Save selection as a note”**. The side
    panel opens with a **New note** form — your quote is already filled in and the cursor is
    in the insight box, so you can type your thoughts and **Save** right away. This path works
    even on pages where the floating button can't appear.
@@ -374,7 +382,7 @@ page where content scripts can't run), the document still opens — it just won'
 
 ### Annotating PDFs
 
-Chrome's built-in PDF viewer is closed to extensions, so PDFs open in Reading Notes' own
+Chrome's built-in PDF viewer is closed to extensions, so PDFs open in Jot' own
 viewer (powered by a locally bundled PDF.js). There you can:
 
 1. **Select text** in the PDF → click **✎ Add note**.
@@ -386,8 +394,8 @@ Highlights are re-anchored by **page number + quoted text**, so they come back e
 reopen the file.
 
 - **Local PDFs (`file://`)** additionally require enabling **"Allow access to file URLs"** on
-  the Reading Notes card in `chrome://extensions`.
-- **To go back to Chrome's native PDF viewer**, untick **"Annotate PDFs in Reading Notes
+  the Jot card in `chrome://extensions`.
+- **To go back to Chrome's native PDF viewer**, untick **"Annotate PDFs in Jot
   viewer"** at the top of the side panel.
 
 ### Adding book/citation details

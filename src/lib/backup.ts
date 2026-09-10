@@ -2,7 +2,7 @@ import type { Note, SavedSource } from './types';
 import { getNotes, getSources } from './storage';
 
 export interface Backup {
-  type: 'reading-notes-backup';
+  type: 'jot-backup';
   version: number;
   exportedAt: number;
   notes: Note[];
@@ -13,7 +13,7 @@ export interface Backup {
 export async function buildBackup(): Promise<Backup> {
   const [notes, sources] = await Promise.all([getNotes(), getSources()]);
   return {
-    type: 'reading-notes-backup',
+    type: 'jot-backup',
     version: 1,
     exportedAt: Date.now(),
     notes,
@@ -32,7 +32,7 @@ export async function exportBackup(): Promise<void> {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
-  const filename = `reading-notes-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const filename = `jot-backup-${new Date().toISOString().slice(0, 10)}.json`;
   try {
     await chrome.downloads.download({ url, filename, saveAs: true });
   } finally {

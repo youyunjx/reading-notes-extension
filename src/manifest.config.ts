@@ -3,7 +3,7 @@ import pkg from '../package.json';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Reading Notes',
+  name: 'Jot',
   version: pkg.version,
   description: pkg.description,
   // sidePanel needs Chrome 114+; match_origin_as_fallback needs 119+; the
@@ -20,7 +20,7 @@ export default defineManifest({
     128: 'icons/icon128.png',
   },
   action: {
-    default_title: 'Open Reading Notes',
+    default_title: 'Open Jot',
     default_icon: {
       16: 'icons/icon16.png',
       48: 'icons/icon48.png',

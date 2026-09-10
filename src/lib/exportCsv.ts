@@ -1,10 +1,10 @@
 import type { Note } from './types';
 import { notesToCsv } from './csv';
 
-/** File name like `reading-notes-2026-07-15.csv`. */
+/** File name like `jot-notes-2026-07-15.csv`. */
 function csvFileName(): string {
   const date = new Date().toISOString().slice(0, 10);
-  return `reading-notes-${date}.csv`;
+  return `jot-notes-${date}.csv`;
 }
 
 /**

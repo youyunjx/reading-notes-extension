@@ -21,8 +21,8 @@ import { execSync } from 'node:child_process';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = join(root, 'dist');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-const stageDir = join(root, '.package', 'reading-notes');
-const zipPath = join(root, `reading-notes-v${pkg.version}.zip`);
+const stageDir = join(root, '.package', 'jot');
+const zipPath = join(root, `jot-v${pkg.version}.zip`);
 
 if (!existsSync(distDir)) {
   console.error('\n✗ dist/ not found. Run `npm run build` first.\n');
