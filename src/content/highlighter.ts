@@ -146,3 +146,78 @@ export function applyMarkers(targets: MarkTarget[], onClick: (t: MarkTarget) => 
     insertMarkerAt(ins.endPos, makeMarker(ins.target, onClick));
   }
 }
+
+/** Locate a quote on the page and return a Range covering it, or null. */
+function findQuoteRange(quote: string): Range | null {
+  const needle = collapseWs(quote).toLowerCase();
+  if (needle.length < 2 || !document.body) return null;
+
+  const { text, map } = buildIndex();
+  const idx = text.toLowerCase().indexOf(needle);
+  if (idx === -1) return null;
+
+  const start = map[idx];
+  const end = map[idx + needle.length - 1];
+  if (!start || !end) return null;
+
+  try {
+    const range = document.createRange();
+    range.setStart(start.node, start.offset);
+    range.setEnd(end.node, Math.min(end.offset + 1, end.node.length));
+    return range;
+  } catch {
+    return null;
+  }
+}
+
+const FLASH_ATTR = 'data-rn-flash';
+
+/** Briefly paint boxes over a range so the reader's eye lands on it. Uses
+ *  absolutely positioned overlays, so the page's own DOM is never modified. */
+function flashRange(range: Range): void {
+  document.querySelectorAll(`[${FLASH_ATTR}]`).forEach((el) => el.remove());
+  const rects = [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+  const overlays: HTMLElement[] = [];
+  for (const r of rects) {
+    const box = document.createElement('div');
+    box.setAttribute(FLASH_ATTR, '1');
+    Object.assign(box.style, {
+      position: 'absolute',
+      left: `${r.left + window.scrollX}px`,
+      top: `${r.top + window.scrollY}px`,
+      width: `${r.width}px`,
+      height: `${r.height}px`,
+      backgroundColor: 'rgba(253, 224, 71, 0.75)',
+      borderRadius: '2px',
+      pointerEvents: 'none',
+      zIndex: '2147483646',
+      transition: 'opacity 0.5s ease',
+    } as CSSStyleDeclaration);
+    document.body.appendChild(box);
+    overlays.push(box);
+  }
+  window.setTimeout(() => overlays.forEach((o) => (o.style.opacity = '0')), 1800);
+  window.setTimeout(() => overlays.forEach((o) => o.remove()), 2400);
+}
+
+/**
+ * Scroll the page to a saved quote and flash it. Returns false if the text
+ * can't be found in this document (e.g. the page changed, or it's in a frame
+ * this script isn't running in).
+ */
+export function scrollToQuote(quote: string): boolean {
+  const range = findQuoteRange(quote);
+  if (!range) return false;
+
+  const rect = range.getBoundingClientRect();
+  if (rect.width === 0 && rect.height === 0) return false;
+
+  const target = rect.top + window.scrollY - window.innerHeight / 3;
+  window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+  // Let the smooth scroll settle before measuring for the flash overlay.
+  window.setTimeout(() => {
+    const fresh = findQuoteRange(quote);
+    if (fresh) flashRange(fresh);
+  }, 450);
+  return true;
+}

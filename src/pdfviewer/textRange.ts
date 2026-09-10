@@ -7,31 +7,32 @@ interface CharPos {
   offset: number;
 }
 
-function collapseWs(s: string): string {
-  return s.replace(/\s+/g, ' ').trim();
+/**
+ * Strip *all* whitespace for matching.
+ *
+ * PDF.js renders each text run as its own <span> and marks line ends with
+ * <br>, so the spaces you see are often produced by layout rather than by real
+ * space characters. A copied selection therefore contains spaces the DOM text
+ * doesn't have (and vice versa). Ignoring whitespace entirely makes the match
+ * robust in both directions.
+ */
+function stripWs(s: string): string {
+  return s.replace(/\s+/g, '');
 }
 
-/** Whitespace-collapsed text of a container, mapped back to (node, offset). */
+/** Whitespace-free text of a container, mapped back to (node, offset). */
 function buildIndex(container: HTMLElement): { text: string; map: CharPos[] } {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   let text = '';
   const map: CharPos[] = [];
-  let prevSpace = true;
   let node: Node | null;
   while ((node = walker.nextNode())) {
     const t = node as Text;
     const v = t.nodeValue ?? '';
     for (let i = 0; i < v.length; i++) {
-      if (/\s/.test(v[i])) {
-        if (prevSpace) continue;
-        text += ' ';
-        map.push({ node: t, offset: i });
-        prevSpace = true;
-      } else {
-        text += v[i];
-        map.push({ node: t, offset: i });
-        prevSpace = false;
-      }
+      if (/\s/.test(v[i])) continue; // whitespace ignored on both sides
+      text += v[i];
+      map.push({ node: t, offset: i });
     }
   }
   return { text, map };
@@ -43,7 +44,7 @@ function buildIndex(container: HTMLElement): { text: string; map: CharPos[] } {
  * spacing quirks of PDF text extraction.
  */
 export function findQuoteRange(container: HTMLElement, quote: string): Range | null {
-  const needle = collapseWs(quote).toLowerCase();
+  const needle = stripWs(quote).toLowerCase();
   if (needle.length < 2) return null;
 
   const { text, map } = buildIndex(container);

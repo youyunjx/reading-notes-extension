@@ -29,6 +29,9 @@ source**. Everything is stored locally on your machine and browsed from a side p
 - **Bibliographic citations** — attach author, editor, book name, chapter, page, publisher,
   and year to any note. **Save a book once and reuse it**: pick it from the “Reuse a saved
   source” dropdown to auto-fill the book-level fields on later notes (just update chapter/page).
+- **Jump back to the source** — every note has a **↗ Go to** button that opens its document
+  and scrolls straight to the quoted passage, flashing it. Works for web pages, local HTML,
+  and PDFs (which open at the right page). Reuses the tab if the document is already open.
 - **Browse & manage** — a side panel lists all notes grouped by source, with search,
   edit, and delete. Click a source to reopen the page.
 - **Export to CSV** — one click writes all notes (including citation columns) to a CSV file
@@ -345,6 +348,18 @@ node scripts/generate-icons.mjs
    panel opens with a **New note** form — your quote is already filled in and the cursor is
    in the insight box, so you can type your thoughts and **Save** right away. This path works
    even on pages where the floating button can't appear.
+
+### Jumping from a note back to the document
+
+Click **↗ Go to** on any note in the side panel:
+
+- **Web pages / local HTML** — opens (or focuses) the tab, scrolls to the quoted passage and
+  flashes it in yellow.
+- **PDFs** — opens the PDF at the note's page and pulses that highlight.
+
+If the document is already open in a tab, that tab is reused and focused rather than opening
+a duplicate. If the passage can no longer be found (the page changed, or it's a restricted
+page where content scripts can't run), the document still opens — it just won't scroll.
 
 ### Annotating PDFs
 

@@ -4,8 +4,9 @@ import { Composer } from './Composer';
 import { sendMessage } from '../lib/messages';
 import type { RuntimeResponse } from '../lib/messages';
 import { getNotes, subscribeNotes } from '../lib/storage';
-import { applyMarkers, clearMarkers } from './highlighter';
+import { applyMarkers, clearMarkers, scrollToQuote } from './highlighter';
 import type { MarkTarget } from './highlighter';
+import type { RuntimeMessage } from '../lib/messages';
 import type { Citation, Note, NoteSource } from '../lib/types';
 
 const HOST_ID = 'reading-notes-root';
@@ -197,6 +198,18 @@ export function ContentApp() {
       window.removeEventListener('hashchange', onNav);
       window.clearInterval(poll);
     };
+  }, []);
+
+  // The side panel can ask us to jump to a saved quote on this page. Runs in
+  // every frame; whichever frame contains the text does the scrolling.
+  useEffect(() => {
+    const listener = (message: RuntimeMessage) => {
+      if (message.type === 'SCROLL_TO_QUOTE') {
+        scrollToQuote(message.payload.quote);
+      }
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
   }, []);
 
   // Clicking an inline marker asks the side panel to focus that note.

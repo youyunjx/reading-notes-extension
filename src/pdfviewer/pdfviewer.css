@@ -117,6 +117,24 @@ body {
   pointer-events: none;
 }
 
+/* Pulses when you arrive from "Go to" in the side panel. */
+@keyframes pdf-flash {
+  0%,
+  100% {
+    background: rgba(253, 224, 71, 0.5);
+    box-shadow: none;
+  }
+  25%,
+  75% {
+    background: rgba(249, 115, 22, 0.75);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.45);
+  }
+}
+
+.pdf-highlight.flash {
+  animation: pdf-flash 1.2s ease-in-out 3;
+}
+
 .pdf-page-label {
   position: absolute;
   top: 6px;
@@ -238,9 +256,33 @@ body {
   z-index: 50;
 }
 
+.pdf-note-flag {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  z-index: 55;
+}
+
+.pdf-note-flag:hover {
+  background: #4338ca;
+}
+
 .pdf-toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 74px; /* clears the corner notes badge */
   right: 24px;
   background: #111827;
   color: #fff;

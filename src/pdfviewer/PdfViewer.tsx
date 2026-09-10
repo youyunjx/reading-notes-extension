@@ -38,6 +38,10 @@ export function PdfViewer() {
     [],
   );
   const fileName = useMemo(() => fileNameOf(fileUrl), [fileUrl]);
+  // ?note=<id> — jump to that note's page and flash its highlight.
+  const [targetNoteId, setTargetNoteId] = useState<string | null>(
+    () => new URLSearchParams(location.search).get('note'),
+  );
 
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +89,29 @@ export function PdfViewer() {
   useEffect(() => {
     if (draft) textareaRef.current?.focus();
   }, [draft]);
+
+  // Jump to the note requested via ?note=<id> once the document and notes load.
+  useEffect(() => {
+    if (!targetNoteId || !doc) return;
+    const note = notes.find((n) => n.id === targetNoteId);
+    const page = note?.source.pdfPage;
+    if (!page) return;
+
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.querySelector<HTMLElement>(`[data-page-number="${page}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (attempts++ < 20) window.setTimeout(tryScroll, 150);
+    };
+    tryScroll();
+
+    // Keep the flash on long enough to be seen after the page renders.
+    const clear = window.setTimeout(() => setTargetNoteId(null), 6000);
+    return () => window.clearTimeout(clear);
+  }, [targetNoteId, doc, notes]);
 
   useEffect(() => {
     return () => {
@@ -214,6 +241,7 @@ export function PdfViewer() {
               pageNumber={n}
               scale={scale}
               notes={notesByPage.get(n) ?? []}
+              flashNoteId={targetNoteId}
               onHighlightClick={onHighlightClick}
             />
           ))}
@@ -266,6 +294,24 @@ export function PdfViewer() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* The corner badge normally comes from the content script, which can't
+          run on extension pages — so the viewer provides its own. */}
+      {notes.length > 0 && (
+        <button
+          className="pdf-note-flag"
+          title={`${notes.length} note${notes.length === 1 ? '' : 's'} in this PDF — open Reading Notes`}
+          onClick={() =>
+            void sendMessage({
+              type: 'FOCUS_NOTE',
+              payload: { noteId: '', sourceKey: fileUrl },
+            })
+          }
+        >
+          <span aria-hidden>📖</span>
+          {notes.length} {notes.length === 1 ? 'note' : 'notes'}
+        </button>
       )}
 
       {toast && <div className="pdf-toast">{toast}</div>}

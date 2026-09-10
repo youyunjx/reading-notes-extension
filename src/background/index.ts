@@ -15,6 +15,79 @@ function viewerUrlFor(fileUrl: string): string {
   return `${chrome.runtime.getURL('src/pdfviewer/index.html')}?file=${encodeURIComponent(fileUrl)}`;
 }
 
+// --- Navigate to a note's position in its document ---------------------------
+
+const stripHash = (u: string) => u.split('#')[0];
+
+/** Ask a tab's content script to scroll to a quote (no-op if it can't). */
+function requestScroll(tabId: number, noteId: string, quote: string): void {
+  chrome.tabs
+    .sendMessage(tabId, { type: 'SCROLL_TO_QUOTE', payload: { noteId, quote } })
+    .catch(() => {
+      /* no content script here (restricted page) — the tab still opened */
+    });
+}
+
+/** Scroll once the tab has finished loading (for tabs we just created). */
+function scrollWhenReady(tabId: number, noteId: string, quote: string): void {
+  const listener = (updatedId: number, info: chrome.tabs.TabChangeInfo) => {
+    if (updatedId !== tabId || info.status !== 'complete') return;
+    chrome.tabs.onUpdated.removeListener(listener);
+    // Give the content script a moment to mount before asking it to scroll.
+    setTimeout(() => requestScroll(tabId, noteId, quote), 350);
+  };
+  chrome.tabs.onUpdated.addListener(listener);
+  // Don't leak the listener if the page never reports "complete".
+  setTimeout(() => chrome.tabs.onUpdated.removeListener(listener), 30_000);
+}
+
+async function navigateToNote(payload: {
+  noteId: string;
+  url: string;
+  quote: string;
+  pdfPage?: number;
+}): Promise<void> {
+  const isPdf = typeof payload.pdfPage === 'number';
+  const targetUrl = isPdf
+    ? `${viewerUrlFor(payload.url)}&note=${encodeURIComponent(payload.noteId)}`
+    : payload.url;
+
+  const viewerPrefix = chrome.runtime.getURL('src/pdfviewer/index.html');
+  const encodedFile = encodeURIComponent(payload.url);
+
+  // Reuse a tab already showing this document, if there is one.
+  const tabs = await chrome.tabs.query({});
+  const existing = tabs.find((t) => {
+    if (!t.url) return false;
+    if (isPdf) {
+      return t.url.startsWith(viewerPrefix) && t.url.includes(encodedFile);
+    }
+    return stripHash(t.url) === stripHash(payload.url);
+  });
+
+  if (existing?.id != null) {
+    // For PDFs, re-navigate so the viewer picks up the ?note= target.
+    await chrome.tabs.update(existing.id, {
+      active: true,
+      ...(isPdf ? { url: targetUrl } : {}),
+    });
+    if (existing.windowId != null) {
+      await chrome.windows.update(existing.windowId, { focused: true }).catch(() => undefined);
+    }
+    if (isPdf) {
+      scrollWhenReady(existing.id, payload.noteId, payload.quote);
+    } else {
+      requestScroll(existing.id, payload.noteId, payload.quote);
+    }
+    return;
+  }
+
+  const created = await chrome.tabs.create({ url: targetUrl });
+  if (!isPdf && created.id != null) {
+    scrollWhenReady(created.id, payload.noteId, payload.quote);
+  }
+}
+
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   if (details.frameId !== 0) return; // top-level navigations only
   const url = details.url;
@@ -88,6 +161,13 @@ chrome.runtime.onMessage.addListener(
         return false;
       }
       opening
+        .then(() => sendResponse({ ok: true }))
+        .catch((err) => sendResponse({ ok: false, error: err?.message ?? String(err) }));
+      return true;
+    }
+
+    if (message.type === 'NAVIGATE_TO_NOTE') {
+      navigateToNote(message.payload)
         .then(() => sendResponse({ ok: true }))
         .catch((err) => sendResponse({ ok: false, error: err?.message ?? String(err) }));
       return true;

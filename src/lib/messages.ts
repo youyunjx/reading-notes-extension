@@ -4,7 +4,14 @@ import type { NewNoteInput } from './types';
 export type RuntimeMessage =
   | { type: 'ADD_NOTE'; payload: NewNoteInput }
   | { type: 'OPEN_SIDE_PANEL' }
-  | { type: 'FOCUS_NOTE'; payload: { noteId: string; sourceKey: string } };
+  | { type: 'FOCUS_NOTE'; payload: { noteId: string; sourceKey: string } }
+  /** Side panel → background: open/focus the note's document and scroll to it. */
+  | {
+      type: 'NAVIGATE_TO_NOTE';
+      payload: { noteId: string; url: string; quote: string; pdfPage?: number };
+    }
+  /** Background → content script: scroll to a quote on the current page. */
+  | { type: 'SCROLL_TO_QUOTE'; payload: { noteId: string; quote: string } };
 
 export type RuntimeResponse =
   | { ok: true }

@@ -18,6 +18,8 @@ interface Props {
     citation: Citation,
   ) => void;
   onSaveSource: (citation: Citation) => void;
+  /** Open the note's document and scroll to the quoted passage. */
+  onGoToSource: (note: Note) => void;
 }
 
 function formatDate(ts: number): string {
@@ -36,6 +38,7 @@ export function NoteCard({
   onDelete,
   onSaveEdit,
   onSaveSource,
+  onGoToSource,
 }: Props) {
   const [editing, setEditing] = useState(false);
   const [insight, setInsight] = useState(note.insight);
@@ -121,6 +124,17 @@ export function NoteCard({
           </>
         ) : (
           <>
+            <button
+              className="icon-btn"
+              onClick={() => onGoToSource(note)}
+              title={
+                note.source.pdfPage
+                  ? `Open the PDF at page ${note.source.pdfPage} and jump to this passage`
+                  : 'Open the page and jump to this passage'
+              }
+            >
+              ↗ Go to
+            </button>
             <button className="icon-btn" onClick={() => setEditing(true)}>
               Edit
             </button>

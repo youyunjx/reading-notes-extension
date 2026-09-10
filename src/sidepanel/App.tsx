@@ -21,6 +21,7 @@ import {
 } from '../lib/storage';
 import { exportNotesToCsv } from '../lib/exportCsv';
 import { exportBackup, parseBackup } from '../lib/backup';
+import { sendMessage } from '../lib/messages';
 import type {
   Citation,
   FocusRequest,
@@ -208,6 +209,23 @@ export function App() {
 
   async function handleSaveSource(citation: Citation) {
     await saveSource(citation);
+  }
+
+  /** Open the note's document (web page, local HTML, or PDF) and scroll to it. */
+  function handleGoToSource(note: Note) {
+    if (!note.source.url) {
+      flashStatus('This note has no source URL to open.');
+      return;
+    }
+    void sendMessage({
+      type: 'NAVIGATE_TO_NOTE',
+      payload: {
+        noteId: note.id,
+        url: note.source.url,
+        quote: note.quote,
+        ...(note.source.pdfPage ? { pdfPage: note.source.pdfPage } : {}),
+      },
+    });
   }
 
   async function handleExportBackup() {
@@ -431,6 +449,7 @@ export function App() {
                   onDelete={handleDelete}
                   onSaveEdit={handleSaveEdit}
                   onSaveSource={handleSaveSource}
+                  onGoToSource={handleGoToSource}
                 />
               ))}
             </div>

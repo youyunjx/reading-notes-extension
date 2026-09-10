@@ -11,6 +11,8 @@ interface Props {
   scale: number;
   /** Notes anchored to this page. */
   notes: Note[];
+  /** Note to briefly flash (when arriving from "Go to" in the side panel). */
+  flashNoteId?: string | null;
   onHighlightClick: (note: Note) => void;
 }
 
@@ -19,7 +21,14 @@ interface HighlightBox extends RectBox {
   title: string;
 }
 
-export function PdfPage({ doc, pageNumber, scale, notes, onHighlightClick }: Props) {
+export function PdfPage({
+  doc,
+  pageNumber,
+  scale,
+  notes,
+  flashNoteId,
+  onHighlightClick,
+}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -156,6 +165,20 @@ export function PdfPage({ doc, pageNumber, scale, notes, onHighlightClick }: Pro
     setBoxes(next);
   }, [notes, renderedAt, resizeTick]);
 
+  // When arriving from "Go to", scroll to the passage itself (not just the page)
+  // once its highlight boxes have been measured.
+  useEffect(() => {
+    if (!flashNoteId) return;
+    const wrap = wrapRef.current;
+    const box = boxes.find((b) => b.noteId === flashNoteId);
+    if (!wrap || !box) return;
+    const top = wrap.getBoundingClientRect().top + window.scrollY + box.top;
+    window.scrollTo({
+      top: Math.max(0, top - window.innerHeight / 3),
+      behavior: 'smooth',
+    });
+  }, [flashNoteId, boxes]);
+
   // The text layer sits above the highlights (so text stays selectable), which
   // means it swallows clicks. Hit-test at the page level instead.
   function boxAt(e: React.MouseEvent): HighlightBox | undefined {
@@ -202,7 +225,7 @@ export function PdfPage({ doc, pageNumber, scale, notes, onHighlightClick }: Pro
         {boxes.map((b, i) => (
           <div
             key={`${b.noteId}-${i}`}
-            className="pdf-highlight"
+            className={`pdf-highlight${flashNoteId === b.noteId ? ' flash' : ''}`}
             style={{ left: b.left, top: b.top, width: b.width, height: b.height }}
           />
         ))}
