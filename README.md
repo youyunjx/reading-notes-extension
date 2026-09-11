@@ -352,11 +352,16 @@ npm run build      # type-checks, then builds to dist/
 npm run dev        # dev server with hot-reload; load dist/ as unpacked
 ```
 
-Icons are pre-generated in `public/icons/`. To regenerate the placeholder icons:
+The master logo lives at `assets/logo.png`; the extension icons in `public/icons/` are
+generated from it and committed. Only re-run this when the logo changes:
 
 ```bash
+npm install --no-save sharp
 node scripts/generate-icons.mjs
 ```
+
+(`sharp` is deliberately not a saved dependency — it's a heavyweight native package that
+isn't needed just to build the extension.)
 
 ## How to use
 
@@ -448,7 +453,8 @@ src/
   background/index.ts     context menu, side-panel behavior, message routing
   content/                selection button + shadow-DOM composer (React)
   sidepanel/              notes browser UI (React): list, search, edit, delete
-scripts/generate-icons.mjs  placeholder icon generator
+assets/logo.png             master logo (source for the extension icons)
+scripts/generate-icons.mjs  resizes the logo into public/icons/
 ```
 
 ## Storage model
