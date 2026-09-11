@@ -1,11 +1,23 @@
 :root {
-  --bg: #f8fafc;
+  --bg: #f6fafe;
   --surface: #ffffff;
-  --border: #e5e7eb;
+  --border: #e3e9f0;
   --text: #111827;
-  --muted: #6b7280;
-  --brand: #4f46e5;
-  --brand-weak: #eef2ff;
+  --muted: #64748b;
+
+  /* Sampled from the Jot logo: the gradient runs #80C9FB -> #2B6FCF, with a
+     cream highlighter underline. --brand is the deep end of the gradient so
+     white text on it stays readable (~5:1 contrast); the lighter tones are
+     reserved for fills and accents. */
+  --brand: #2b6fcf;
+  --brand-dark: #215bb0;
+  --brand-light: #80c9fb;
+  --brand-weak: #eaf4fe;
+  --brand-weak-border: #bfdffa;
+  --brand-ink: #1c4e96;
+  --brand-gradient: linear-gradient(135deg, #80c9fb 0%, #2b6fcf 100%);
+  --accent-cream: #fff8d6;
+
   --danger: #dc2626;
   color-scheme: light;
 }
@@ -43,7 +55,10 @@ body {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: var(--surface);
+  /* White panel with a sky-blue gradient hairline on top, echoing the logo. */
+  background: linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--brand-gradient) border-box;
+  border-top: 3px solid transparent;
   border-bottom: 1px solid var(--border);
   padding: 14px 16px 12px;
 }
@@ -92,7 +107,7 @@ body {
 }
 
 .tool-btn:hover:not(:disabled) {
-  background: #e0e7ff;
+  background: #d6eafc;
 }
 
 .tool-btn:disabled {
@@ -274,7 +289,7 @@ body {
   margin: 12px 12px 0;
   padding: 12px;
   background: var(--brand-weak);
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--brand-weak-border);
   border-radius: 10px;
 }
 
@@ -434,7 +449,7 @@ body {
   border-radius: 6px;
   font-size: 12px;
   line-height: 1.45;
-  color: #3730a3;
+  color: var(--brand-ink);
   word-break: break-word;
 }
 

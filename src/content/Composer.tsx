@@ -97,7 +97,7 @@ export function Composer({ anchor, quote, onSave, onCancel }: Props) {
             margin: 0,
             padding: '8px 10px',
             background: '#f8fafc',
-            borderLeft: '3px solid #4F46E5',
+            borderLeft: '3px solid #2B6FCF',
             borderRadius: 4,
             fontSize: 13,
             lineHeight: 1.5,
@@ -151,7 +151,7 @@ export function Composer({ anchor, quote, onSave, onCancel }: Props) {
           </select>
         )}
         {citationHasData(citation) && (
-          <div style={{ marginTop: 6, fontSize: 11, color: '#4F46E5', fontWeight: 600 }}>
+          <div style={{ marginTop: 6, fontSize: 11, color: '#2B6FCF', fontWeight: 600 }}>
             ✓ {sourceLabel(citation)}
           </div>
         )}
@@ -202,7 +202,7 @@ export function Composer({ anchor, quote, onSave, onCancel }: Props) {
           disabled={saving}
           style={{
             padding: '7px 14px',
-            background: '#4F46E5',
+            background: '#2B6FCF',
             border: 'none',
             borderRadius: 8,
             fontSize: 13,

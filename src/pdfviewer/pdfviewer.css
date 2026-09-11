@@ -1,11 +1,18 @@
 :root {
-  --bg: #525659;
+  /* Desaturated blue-grey reading backdrop — cohesive with the logo while
+     keeping enough neutrality for the white pages to stand out. */
+  --bg: #46586e;
   --surface: #ffffff;
-  --border: #e5e7eb;
+  --border: #e3e9f0;
   --text: #111827;
-  --muted: #6b7280;
-  --brand: #4f46e5;
-  --brand-weak: #eef2ff;
+  --muted: #64748b;
+
+  /* Sampled from the Jot logo (gradient #80C9FB -> #2B6FCF). */
+  --brand: #2b6fcf;
+  --brand-dark: #215bb0;
+  --brand-light: #80c9fb;
+  --brand-weak: #eaf4fe;
+  --brand-gradient: linear-gradient(135deg, #80c9fb 0%, #2b6fcf 100%);
   color-scheme: light;
 }
 
@@ -35,8 +42,8 @@ body {
   align-items: center;
   gap: 12px;
   padding: 8px 14px;
-  background: #323639;
-  color: #f3f4f6;
+  background: linear-gradient(135deg, #2f7ad8 0%, #215bb0 100%);
+  color: #f4f9ff;
   font-size: 13px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
@@ -153,7 +160,7 @@ body {
 }
 
 .pdf-status a {
-  color: #a5b4fc;
+  color: var(--brand-light);
 }
 
 /* Selection composer */
@@ -252,7 +259,7 @@ body {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 14px rgba(43, 111, 207, 0.4);
   z-index: 50;
 }
 
@@ -272,12 +279,12 @@ body {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.45);
+  box-shadow: 0 4px 14px rgba(43, 111, 207, 0.45);
   z-index: 55;
 }
 
 .pdf-note-flag:hover {
-  background: #4338ca;
+  background: var(--brand-dark);
 }
 
 .pdf-toast {

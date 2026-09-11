@@ -306,7 +306,7 @@ function PageNoteFlag({ count, onClick }: { count: number; onClick: () => void }
         alignItems: 'center',
         gap: 6,
         padding: '8px 12px',
-        background: '#4F46E5',
+        background: '#2B6FCF',
         color: '#fff',
         border: 'none',
         borderRadius: 999,
@@ -314,7 +314,7 @@ function PageNoteFlag({ count, onClick }: { count: number; onClick: () => void }
         fontSize: 13,
         fontWeight: 600,
         cursor: 'pointer',
-        boxShadow: '0 4px 14px rgba(79,70,229,0.4)',
+        boxShadow: '0 4px 14px rgba(43,111,207,0.4)',
         zIndex: 2147483646,
       }}
     >
