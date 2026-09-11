@@ -32,6 +32,17 @@ function fileNameOf(url: string): string {
   }
 }
 
+/** Make a filename safe for chrome.downloads (no path separators or reserved
+ *  characters) and ensure it ends in .pdf. Falls back to "document.pdf" when the
+ *  URL has no usable filename. */
+function safePdfName(name: string): string {
+  // A name still containing "://" means fileNameOf fell back to the whole URL.
+  let base = name.includes('://') ? '' : name;
+  base = base.replace(/[\\/:*?"<>|]+/g, '_').trim();
+  if (!base || /^_+$/.test(base)) base = 'document.pdf';
+  return /\.pdf$/i.test(base) ? base : `${base}.pdf`;
+}
+
 export function PdfViewer() {
   const fileUrl = useMemo(
     () => new URLSearchParams(location.search).get('file') ?? '',
@@ -51,6 +62,7 @@ export function PdfViewer() {
   const [draft, setDraft] = useState<Draft | null>(null); // open composer
   const [insight, setInsight] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const toastTimer = useRef<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -173,6 +185,38 @@ export function PdfViewer() {
     flashToast('✓ Note saved');
   }
 
+  /**
+   * Save the PDF to disk. Uses the bytes PDF.js already holds rather than
+   * re-fetching the URL: no second download, it works for local file:// PDFs,
+   * and it can't be intercepted by our own PDF redirect.
+   */
+  async function downloadPdf() {
+    if (!doc || downloading) return;
+    setDownloading(true);
+    let objectUrl: string | null = null;
+    try {
+      const data = await doc.getData();
+      const blob = new Blob([data as BlobPart], { type: 'application/pdf' });
+      objectUrl = URL.createObjectURL(blob);
+      // `saveAs` is intentionally omitted so Chrome follows the user's own
+      // "Ask where to save each file" preference, like the built-in viewer.
+      await chrome.downloads.download({
+        url: objectUrl,
+        filename: safePdfName(fileName),
+      });
+      flashToast('✓ PDF downloaded');
+    } catch (err) {
+      console.error('[Jot] PDF download failed:', err);
+      flashToast('Download failed — see console for details.');
+    } finally {
+      setDownloading(false);
+      if (objectUrl) {
+        const url = objectUrl;
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+    }
+  }
+
   const onHighlightClick = useCallback((note: Note) => {
     void sendMessage({
       type: 'FOCUS_NOTE',
@@ -228,6 +272,9 @@ export function PdfViewer() {
         scale={scale}
         setScale={setScale}
         noteCount={notes.length}
+        onDownload={() => void downloadPdf()}
+        downloading={downloading}
+        canDownload={!!doc}
       />
 
       {!doc ? (
@@ -325,12 +372,18 @@ function Toolbar({
   scale,
   setScale,
   noteCount,
+  onDownload,
+  downloading,
+  canDownload,
 }: {
   fileName: string;
   fileUrl: string;
   scale: number;
   setScale: (s: number) => void;
   noteCount: number;
+  onDownload?: () => void;
+  downloading?: boolean;
+  canDownload?: boolean;
 }) {
   return (
     <div className="pdf-toolbar">
@@ -357,6 +410,14 @@ function Toolbar({
         title="Zoom in"
       >
         +
+      </button>
+      <button
+        className="pdf-btn"
+        onClick={onDownload}
+        disabled={!canDownload || downloading}
+        title="Save this PDF to your computer"
+      >
+        {downloading ? 'Saving…' : '⬇ Download'}
       </button>
       <button
         className="pdf-btn"

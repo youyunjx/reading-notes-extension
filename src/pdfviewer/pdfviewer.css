@@ -72,8 +72,13 @@ body {
   cursor: pointer;
 }
 
-.pdf-btn:hover {
+.pdf-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.12);
+}
+
+.pdf-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .pdf-hint {
