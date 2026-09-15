@@ -1,6 +1,6 @@
 {
   "name": "jot",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "The ONE tool to jot down your reading ideas based in Chrome.",
   "private": true,
   "type": "module",
