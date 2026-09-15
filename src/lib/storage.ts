@@ -167,10 +167,19 @@ export function subscribeFocus(callback: (focus: FocusRequest | null) => void): 
 
 // --- Settings ---
 
-/** Whether PDFs should open in our annotating viewer (default: on). */
+/**
+ * Whether PDFs should open in our annotating viewer. Defaults to ON: only an
+ * explicit `false` (the user unticking the box) turns it off. A failed storage
+ * read also falls back to ON rather than rejecting — otherwise the background's
+ * await would throw and silently skip the redirect.
+ */
 export async function isPdfViewerEnabled(): Promise<boolean> {
-  const result = await chrome.storage.local.get(PDF_VIEWER_KEY);
-  return (result[PDF_VIEWER_KEY] as boolean | undefined) ?? true;
+  try {
+    const result = await chrome.storage.local.get(PDF_VIEWER_KEY);
+    return (result[PDF_VIEWER_KEY] as boolean | undefined) !== false;
+  } catch {
+    return true;
+  }
 }
 
 export async function setPdfViewerEnabled(enabled: boolean): Promise<void> {

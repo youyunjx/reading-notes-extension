@@ -294,15 +294,40 @@ dev `key` removed (the store assigns the published ID) and sourcemaps stripped.
 - **Summary (≤132 chars):** Select text on any page, add your insight, record the source and
   citation. Private, offline, with CSV/JSON export.
 - **Category:** Productivity
-- **Description:**
-  > Jot lets you capture what matters while you read. Select text on any web page,
-  > add your own insight, and it saves the quote with its source (title + URL). Add
-  > bibliographic details — author, editor, book, chapter, page, publisher, year — and reuse a
-  > saved book across many notes. Browse, search, and edit everything in the side panel, and
-  > export to CSV or JSON. All notes are stored locally on your device — no account, no
-  > servers, no tracking.
+- **Homepage URL:** `https://github.com/youyunjx/reading-notes-extension`
+- **Support URL:** `https://github.com/youyunjx/reading-notes-extension/issues`
+- **Description** (paste into Store listing → Description):
+
+```text
+Jot is the ONE tool to jot down your reading ideas, right in Chrome.
+
+Select text on any web page or PDF, add your own insight, and Jot saves the quote
+together with its source. Come back later and the passage is highlighted right
+where you left it.
+
+WHAT YOU CAN DO
+• Select text anywhere — an "Add note" button appears; write your thought and save
+• Annotate PDFs — highlight passages and attach comments without leaving the browser
+• Jump back — "Go to" on any note reopens the document and scrolls to that passage
+• Cite properly — record author, editor, book, chapter, page, publisher and year;
+  save a book once and reuse it across notes
+• Find anything — search your notes and filter by source in the side panel
+• Export — CSV for spreadsheets, JSON for backup and restore
+
+PRIVACY
+Every note is stored locally on your own device using Chrome's storage. There is no
+account, no server, no analytics, and nothing is ever uploaded. Jot is open source —
+read every line at https://github.com/youyunjx/reading-notes-extension
+
+ABOUT CHROME'S INSTALL WARNING
+Chrome may say Jot is "not trusted by Enhanced Safe Browsing". Chrome shows this for
+extensions from new publishers; it is a reputation signal that clears as the publisher
+builds a track record, not a detection of anything harmful. The full source code is
+public at the link above if you would like to verify it yourself.
+```
+
 - **Screenshots (required, 1280×800 or 640×400):** capture the side panel with a few notes,
-  the on-page "Add note" button, and the citation form.
+  the on-page "Add note" button, and a PDF with a highlight.
 
 ### 5. Privacy practices answers
 
