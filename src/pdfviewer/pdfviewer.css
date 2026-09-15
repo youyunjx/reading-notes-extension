@@ -168,6 +168,28 @@ body {
   color: var(--brand-light);
 }
 
+.pdf-status-sub {
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.pdf-cta {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(43, 111, 207, 0.45);
+}
+
+.pdf-cta:hover {
+  background: var(--brand-dark);
+}
+
 /* Selection composer */
 .pdf-composer {
   position: fixed;

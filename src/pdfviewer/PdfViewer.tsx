@@ -63,10 +63,15 @@ export function PdfViewer() {
   const [insight, setInsight] = useState('');
   const [toast, setToast] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  /** Bytes supplied by the user via the file picker, when the URL can't be read. */
+  const [localData, setLocalData] = useState<Uint8Array | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const filePickerRef = useRef<HTMLInputElement>(null);
 
-  // Load the document.
+  const isLocalFile = fileUrl.startsWith('file:');
+
+  // Load the document — either from its URL, or from bytes the user picked.
   useEffect(() => {
     if (!fileUrl) {
       setError('No PDF specified.');
@@ -75,7 +80,10 @@ export function PdfViewer() {
     let cancelled = false;
     (async () => {
       try {
-        const task = getDocument({ url: fileUrl });
+        setError(null);
+        const task = localData
+          ? getDocument({ data: localData })
+          : getDocument({ url: fileUrl });
         const loaded = await task.promise;
         if (cancelled) return;
         setDoc(loaded);
@@ -89,7 +97,25 @@ export function PdfViewer() {
     return () => {
       cancelled = true;
     };
-  }, [fileUrl, fileName]);
+  }, [fileUrl, fileName, localData]);
+
+  /** Load a PDF the user picked from disk. Works with no permissions at all —
+   *  the browser hands us the bytes directly, so it's the reliable way to open
+   *  a local file when "Allow access to file URLs" is off. Notes still key off
+   *  the original file:// URL, so anything saved earlier still lines up. */
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      setDoc(null);
+      setLocalData(new Uint8Array(buf));
+    } catch (err) {
+      console.error('[Jot] Could not read the chosen file:', err);
+      setError('Could not read that file.');
+    }
+  }
 
   // Track this file's notes (local storage; no network).
   useEffect(() => {
@@ -250,14 +276,42 @@ export function PdfViewer() {
           <p>
             <strong>Couldn’t open this PDF.</strong>
           </p>
-          <p>{error}</p>
-          <p>
-            If this is a local file (<code>file://</code>), enable{' '}
-            <em>“Allow access to file URLs”</em> on the Jot card in{' '}
-            <code>chrome://extensions</code>.
-          </p>
-          <p>
-            <a href={fileUrl}>Open in Chrome’s built-in PDF viewer instead</a>
+
+          {isLocalFile ? (
+            <>
+              <p>
+                Chrome blocks extensions from reading files on your computer unless you
+                allow it. Either way works:
+              </p>
+              <p>
+                <button className="pdf-cta" onClick={() => filePickerRef.current?.click()}>
+                  📂 Open this PDF from your computer
+                </button>
+              </p>
+              <p className="pdf-status-sub">
+                Nothing to enable — pick the file and Jot opens it right away. Your
+                existing notes for this file still apply.
+              </p>
+              <p className="pdf-status-sub">
+                To skip this step in future, turn on <em>“Allow access to file URLs”</em>{' '}
+                on the Jot card in <code>chrome://extensions</code>, then reload this page.
+              </p>
+            </>
+          ) : (
+            <p>{error}</p>
+          )}
+
+          <input
+            ref={filePickerRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={onPickFile}
+            style={{ display: 'none' }}
+          />
+
+          <p className="pdf-status-sub">
+            <a href={fileUrl}>Open in Chrome’s built-in PDF viewer instead</a> (no
+            highlighting)
           </p>
         </div>
       </>
