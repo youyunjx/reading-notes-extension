@@ -1,4 +1,5 @@
 import type { PdfAnnotation } from '../lib/types';
+import { tickPoints } from './shapes';
 
 /** #RRGGBB -> 0–1 RGB components. Falls back to black on anything unexpected. */
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -64,6 +65,24 @@ export async function buildAnnotatedPdf(
         borderColor: colour,
         borderWidth: 1.5,
       });
+      continue;
+    }
+
+    if (a.type === 'tick') {
+      // Same geometry helper as the on-screen renderer, with y flipped into
+      // PDF space so the exported tick matches what was drawn.
+      const pts = tickPoints(a.x, a.y, a.w, a.h).map((p) => ({
+        x: p.x * W,
+        y: (1 - p.y) * H,
+      }));
+      for (let i = 0; i < pts.length - 1; i++) {
+        page.drawLine({
+          start: pts[i],
+          end: pts[i + 1],
+          color: colour,
+          thickness: 2.5,
+        });
+      }
       continue;
     }
 

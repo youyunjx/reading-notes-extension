@@ -414,6 +414,7 @@ export function PdfViewer() {
             ['rect', '▭', 'Rectangle — drag to draw'],
             ['ellipse', '◯', 'Ellipse — drag to draw'],
             ['arrow', '↗', 'Arrow — drag from tail to head'],
+            ['tick', '✓', 'Tick — click to drop one, or drag to size it'],
           ] as [AnnotationTool, string, string][]
         ).map(([t, glyph, title]) => (
           <button

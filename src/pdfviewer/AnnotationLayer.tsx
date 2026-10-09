@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AnnotationTool, PdfAnnotation } from '../lib/types';
+import { tickPoints, TICK_DEFAULT_W } from './shapes';
 
 interface Props {
   pageNumber: number;
@@ -108,6 +109,15 @@ export function AnnotationLayer({
         fontSize: DEFAULT_FONT_PT,
         color,
       });
+      return;
+    }
+
+    if (tool === 'tick') {
+      // A plain click drops a default-sized tick; a drag sizes it. The default
+      // is kept visually square by compensating for the page's aspect ratio.
+      const tw = w < MIN_SIZE ? TICK_DEFAULT_W : w;
+      const th = h < MIN_SIZE ? TICK_DEFAULT_W * (width / height) : h;
+      onCreate({ page: pageNumber, type: 'tick', x, y, w: tw, h: th, color });
       return;
     }
 
@@ -229,6 +239,23 @@ export function AnnotationLayer({
               />
             );
           }
+          if (a.type === 'tick') {
+            return (
+              <polyline
+                key={a.id}
+                points={tickPoints(a.x, a.y, a.w, a.h)
+                  .map((p) => `${px(p.x)},${py(p.y)}`)
+                  .join(' ')}
+                fill="none"
+                stroke={a.color}
+                strokeWidth={on ? 4 : 3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="pdf-annot-hit"
+                onPointerDown={(e) => startMove(e, a)}
+              />
+            );
+          }
           return null;
         })}
 
@@ -255,6 +282,19 @@ export function AnnotationLayer({
             stroke={color}
             strokeDasharray="4 3"
             strokeWidth={2}
+          />
+        )}
+        {preview && tool === 'tick' && preview.w > MIN_SIZE && preview.h > MIN_SIZE && (
+          <polyline
+            points={tickPoints(preview.x, preview.y, preview.w, preview.h)
+              .map((p) => `${px(p.x)},${py(p.y)}`)
+              .join(' ')}
+            fill="none"
+            stroke={color}
+            strokeDasharray="4 3"
+            strokeWidth={3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         )}
         {drag && tool === 'arrow' && (

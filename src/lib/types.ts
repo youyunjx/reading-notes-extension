@@ -24,7 +24,13 @@ export interface Citation {
 }
 
 /** Drawing tools available in the PDF viewer. `select` is the idle cursor. */
-export type AnnotationTool = 'select' | 'text' | 'rect' | 'ellipse' | 'arrow';
+export type AnnotationTool =
+  | 'select'
+  | 'text'
+  | 'rect'
+  | 'ellipse'
+  | 'arrow'
+  | 'tick';
 
 export type AnnotationShape = Exclude<AnnotationTool, 'select'>;
 
