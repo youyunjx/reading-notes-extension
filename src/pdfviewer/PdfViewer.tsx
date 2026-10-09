@@ -2,10 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { addNote, getNotes, subscribeNotes } from '../lib/storage';
+import {
+  addAnnotation,
+  deleteAnnotation,
+  getAnnotations,
+  subscribeAnnotations,
+  updateAnnotation,
+} from '../lib/annotations';
 import { sendMessage } from '../lib/messages';
-import type { Note } from '../lib/types';
+import type { AnnotationTool, Note, PdfAnnotation } from '../lib/types';
 import { PdfPage } from './PdfPage';
 import { pageNumberOf } from './textRange';
+import { buildAnnotatedPdf } from './exportPdf';
 
 // Bundled locally by Vite — no CDN, so the viewer works offline.
 GlobalWorkerOptions.workerSrc = new URL(
@@ -65,6 +73,10 @@ export function PdfViewer() {
   const [downloading, setDownloading] = useState(false);
   /** Bytes supplied by the user via the file picker, when the URL can't be read. */
   const [localData, setLocalData] = useState<Uint8Array | null>(null);
+  const [annotations, setAnnotations] = useState<PdfAnnotation[]>([]);
+  const [tool, setTool] = useState<AnnotationTool>('select');
+  const [color, setColor] = useState('#DC2626');
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const filePickerRef = useRef<HTMLInputElement>(null);
@@ -116,6 +128,60 @@ export function PdfViewer() {
       setError('Could not read that file.');
     }
   }
+
+  // Track this file's drawn annotations.
+  useEffect(() => {
+    getAnnotations(fileUrl).then(setAnnotations);
+    return subscribeAnnotations(fileUrl, setAnnotations);
+  }, [fileUrl]);
+
+  // Delete / Backspace removes the selected shape; Escape drops the selection.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = e.target as HTMLElement | null;
+      if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+      if (e.key === 'Escape') {
+        setSelectedAnnotationId(null);
+        setTool('select');
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedAnnotationId) {
+        e.preventDefault();
+        void deleteAnnotation(selectedAnnotationId);
+        setSelectedAnnotationId(null);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedAnnotationId]);
+
+  const annotationsByPage = useMemo(() => {
+    const map = new Map<number, PdfAnnotation[]>();
+    for (const a of annotations) {
+      const list = map.get(a.page);
+      if (list) list.push(a);
+      else map.set(a.page, [a]);
+    }
+    return map;
+  }, [annotations]);
+
+  const onCreateAnnotation = useCallback(
+    (a: Omit<PdfAnnotation, 'id' | 'fileUrl' | 'createdAt' | 'updatedAt'>) => {
+      void addAnnotation({ ...a, fileUrl }).then((created) => {
+        setSelectedAnnotationId(created.id);
+        // One shape per click; drop back to the cursor so the page stays usable.
+        setTool('select');
+      });
+    },
+    [fileUrl],
+  );
+
+  const onMoveAnnotation = useCallback((id: string, x: number, y: number) => {
+    void updateAnnotation(id, { x, y });
+  }, []);
+
+  const onEditAnnotationText = useCallback((id: string, text: string) => {
+    void updateAnnotation(id, { text });
+  }, []);
 
   // Track this file's notes (local storage; no network).
   useEffect(() => {
@@ -221,8 +287,13 @@ export function PdfViewer() {
     setDownloading(true);
     let objectUrl: string | null = null;
     try {
-      const data = await doc.getData();
-      const blob = new Blob([data as BlobPart], { type: 'application/pdf' });
+      const original = await doc.getData();
+      // Burn any drawn text/shapes into the file so they're visible in any
+      // PDF reader, not just Jot.
+      const bytes = annotations.length
+        ? await buildAnnotatedPdf(original, annotations)
+        : original;
+      const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
       objectUrl = URL.createObjectURL(blob);
       // `saveAs` is intentionally omitted so Chrome follows the user's own
       // "Ask where to save each file" preference, like the built-in viewer.
@@ -230,7 +301,11 @@ export function PdfViewer() {
         url: objectUrl,
         filename: safePdfName(fileName),
       });
-      flashToast('✓ PDF downloaded');
+      flashToast(
+        annotations.length
+          ? `✓ PDF downloaded with ${annotations.length} annotation${annotations.length === 1 ? '' : 's'}`
+          : '✓ PDF downloaded',
+      );
     } catch (err) {
       console.error('[Jot] PDF download failed:', err);
       flashToast('Download failed — see console for details.');
@@ -331,6 +406,62 @@ export function PdfViewer() {
         canDownload={!!doc}
       />
 
+      <div className="pdf-tools">
+        {(
+          [
+            ['select', '🖱', 'Select / move'],
+            ['text', 'T', 'Text box — click or drag, then double-click to type'],
+            ['rect', '▭', 'Rectangle — drag to draw'],
+            ['ellipse', '◯', 'Ellipse — drag to draw'],
+            ['arrow', '↗', 'Arrow — drag from tail to head'],
+          ] as [AnnotationTool, string, string][]
+        ).map(([t, glyph, title]) => (
+          <button
+            key={t}
+            className={`pdf-tool${tool === t ? ' on' : ''}`}
+            title={title}
+            onClick={() => setTool(t)}
+          >
+            {glyph}
+          </button>
+        ))}
+
+        <span className="pdf-tool-sep" />
+
+        {['#DC2626', '#2B6FCF', '#16A34A', '#F59E0B', '#111827'].map((c) => (
+          <button
+            key={c}
+            className={`pdf-swatch${color === c ? ' on' : ''}`}
+            style={{ background: c }}
+            title={`Use this colour`}
+            onClick={() => setColor(c)}
+          />
+        ))}
+
+        <span className="pdf-tool-sep" />
+
+        <button
+          className="pdf-tool wide"
+          disabled={!selectedAnnotationId}
+          title="Delete the selected shape (or press Delete)"
+          onClick={() => {
+            if (!selectedAnnotationId) return;
+            void deleteAnnotation(selectedAnnotationId);
+            setSelectedAnnotationId(null);
+          }}
+        >
+          🗑 Delete
+        </button>
+
+        <span className="pdf-tool-hint">
+          {tool === 'select'
+            ? annotations.length
+              ? `${annotations.length} drawing${annotations.length === 1 ? '' : 's'} · included when you download`
+              : 'Pick a tool to draw on the PDF'
+            : 'Drag on the page to draw · Esc to cancel'}
+        </span>
+      </div>
+
       {!doc ? (
         <div className="pdf-status">Loading PDF…</div>
       ) : (
@@ -344,6 +475,14 @@ export function PdfViewer() {
               notes={notesByPage.get(n) ?? []}
               flashNoteId={targetNoteId}
               onHighlightClick={onHighlightClick}
+              annotations={annotationsByPage.get(n) ?? []}
+              tool={tool}
+              color={color}
+              selectedAnnotationId={selectedAnnotationId}
+              onSelectAnnotation={setSelectedAnnotationId}
+              onCreateAnnotation={onCreateAnnotation}
+              onMoveAnnotation={onMoveAnnotation}
+              onEditAnnotationText={onEditAnnotationText}
             />
           ))}
         </div>

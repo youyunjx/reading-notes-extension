@@ -1,6 +1,6 @@
 {
   "name": "jot",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "The ONE tool to jot down your reading ideas based in Chrome.",
   "private": true,
   "type": "module",
@@ -12,6 +12,7 @@
     "package": "npm run build && node scripts/package-zip.mjs"
   },
   "dependencies": {
+    "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

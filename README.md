@@ -24,6 +24,10 @@ on your machine and browsed from a side panel.
   PDF.js) where you can **select text → add a comment → see it highlighted in yellow**, and
   **click a highlight to open that note**. Highlights are re-anchored by page number + text,
   so they reappear next time you open the file.
+- **Draw on PDFs** — add **text boxes, rectangles, ellipses and arrows** in five colours.
+  Drag to draw, drag to move, double-click a text box to edit, Delete to remove. Drawings are
+  saved locally per file — and are **burned into the PDF when you download it**, so they're
+  visible in any PDF reader.
 
 > **Restricted pages:** the in-page UI can't appear on `chrome://` pages, the Chrome Web
 > Store, or other extensions' pages — Chrome does not allow content scripts there. You can

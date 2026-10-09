@@ -23,6 +23,39 @@ export interface Citation {
   year: string;
 }
 
+/** Drawing tools available in the PDF viewer. `select` is the idle cursor. */
+export type AnnotationTool = 'select' | 'text' | 'rect' | 'ellipse' | 'arrow';
+
+export type AnnotationShape = Exclude<AnnotationTool, 'select'>;
+
+/**
+ * A drawn annotation on a PDF page.
+ *
+ * Geometry is normalised to 0–1 of the page's width/height so it is independent
+ * of zoom and of the device pixel ratio. For `arrow`, (x, y) is the start point
+ * and (w, h) is the delta to the end point, so w/h may be negative.
+ */
+export interface PdfAnnotation {
+  id: string;
+  /** The PDF this belongs to (the original file URL, not the viewer URL). */
+  fileUrl: string;
+  /** 1-based page number. */
+  page: number;
+  type: AnnotationShape;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** Text content, for `text` annotations. */
+  text?: string;
+  /** Font size in PDF points (rendered at fontSize * zoom). */
+  fontSize?: number;
+  /** CSS hex colour, e.g. "#DC2626". */
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** A request (from an on-page marker) to focus a specific note in the side panel. */
 export interface FocusRequest {
   noteId: string;

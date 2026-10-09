@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { TextLayer, setLayerDimensions } from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import type { Note } from '../lib/types';
+import type { AnnotationTool, Note, PdfAnnotation } from '../lib/types';
 import { findQuoteRange, rectsRelativeTo } from './textRange';
 import type { RectBox } from './textRange';
+import { AnnotationLayer } from './AnnotationLayer';
 
 interface Props {
   doc: PDFDocumentProxy;
@@ -14,6 +15,17 @@ interface Props {
   /** Note to briefly flash (when arriving from "Go to" in the side panel). */
   flashNoteId?: string | null;
   onHighlightClick: (note: Note) => void;
+  /** Drawing annotations on this page. */
+  annotations: PdfAnnotation[];
+  tool: AnnotationTool;
+  color: string;
+  selectedAnnotationId: string | null;
+  onSelectAnnotation: (id: string | null) => void;
+  onCreateAnnotation: (
+    a: Omit<PdfAnnotation, 'id' | 'fileUrl' | 'createdAt' | 'updatedAt'>,
+  ) => void;
+  onMoveAnnotation: (id: string, x: number, y: number) => void;
+  onEditAnnotationText: (id: string, text: string) => void;
 }
 
 interface HighlightBox extends RectBox {
@@ -28,6 +40,14 @@ export function PdfPage({
   notes,
   flashNoteId,
   onHighlightClick,
+  annotations,
+  tool,
+  color,
+  selectedAnnotationId,
+  onSelectAnnotation,
+  onCreateAnnotation,
+  onMoveAnnotation,
+  onEditAnnotationText,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -231,6 +251,22 @@ export function PdfPage({
         ))}
       </div>
       <div className="textLayer" ref={textRef} />
+      {size && (
+        <AnnotationLayer
+          pageNumber={pageNumber}
+          width={size.w}
+          height={size.h}
+          scale={scale}
+          tool={tool}
+          color={color}
+          annotations={annotations}
+          selectedId={selectedAnnotationId}
+          onSelect={onSelectAnnotation}
+          onCreate={onCreateAnnotation}
+          onMove={onMoveAnnotation}
+          onEditText={onEditAnnotationText}
+        />
+      )}
       <span className="pdf-page-label">{pageNumber}</span>
     </div>
   );

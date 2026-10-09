@@ -86,6 +86,140 @@ body {
   font-size: 12px;
 }
 
+/* Drawing tool palette */
+.pdf-tools {
+  position: sticky;
+  top: 41px;
+  z-index: 29;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #2a3647;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.pdf-tool {
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: transparent;
+  color: #e8eef7;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pdf-tool.wide {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pdf-tool:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pdf-tool.on {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.pdf-tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pdf-swatch {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pdf-swatch.on {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.pdf-tool-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 4px;
+}
+
+.pdf-tool-hint {
+  margin-left: auto;
+  font-size: 12px;
+  color: #b6c4d6;
+}
+
+/* Annotation overlay — sits above the text layer so drawing isn't swallowed
+   by text selection, but stays click-through while the Select tool is active. */
+.pdf-annots {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pdf-annots.drawing {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.pdf-annots-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/* Shapes stay grabbable even when the layer itself is click-through. */
+.pdf-annot-hit {
+  pointer-events: stroke;
+  cursor: move;
+}
+
+.pdf-annots.drawing .pdf-annot-hit {
+  pointer-events: none;
+}
+
+.pdf-annot-text {
+  position: absolute;
+  pointer-events: auto;
+  cursor: move;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1px 2px;
+  border: 1px dashed transparent;
+}
+
+.pdf-annot-text:hover,
+.pdf-annot-text.selected {
+  border-color: rgba(43, 111, 207, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.pdf-annot-text textarea {
+  width: 100%;
+  min-height: 2.2em;
+  border: none;
+  outline: none;
+  resize: none;
+  background: rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  line-height: 1.25;
+}
+
+.pdf-annots.drawing .pdf-annot-text {
+  pointer-events: none;
+}
+
 /* Pages */
 .pdf-pages {
   padding: 20px 0 60px;
