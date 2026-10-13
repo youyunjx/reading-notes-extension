@@ -233,6 +233,17 @@ body {
   position: relative;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+
+  /* PDF.js sizes the text layer with
+     `round(down, var(--total-scale-factor) * Npx, var(--scale-round-x))`.
+     It normally defines these on its own `.pdfViewer .page` wrapper, which we
+     don't use — and an undefined var makes the whole round() invalid, so the
+     width/height are dropped and every text span lands at the wrong offset.
+     Declaring them here keeps the text layer aligned with the canvas.
+     (--total-scale-factor is set per page at render time.) */
+  --user-unit: 1;
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
 }
 
 .pdf-page canvas {

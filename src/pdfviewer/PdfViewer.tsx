@@ -21,6 +21,22 @@ GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).href;
 
+/**
+ * PDF.js runtime assets, shipped inside the extension (see
+ * scripts/copy-pdfjs-assets.mjs).
+ *
+ * `standardFontDataUrl` is the important one: without it, a PDF that doesn't
+ * embed its fonts gets a substitute whose letter widths differ from the ones
+ * the invisible text layer is positioned with — so selection highlights drift
+ * away from the glyphs they're meant to cover.
+ */
+const PDFJS_ASSET_OPTIONS = {
+  standardFontDataUrl: chrome.runtime.getURL('pdfjs/standard_fonts/'),
+  cMapUrl: chrome.runtime.getURL('pdfjs/cmaps/'),
+  cMapPacked: true,
+  wasmUrl: chrome.runtime.getURL('pdfjs/wasm/'),
+} as const;
+
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 
@@ -94,8 +110,8 @@ export function PdfViewer() {
       try {
         setError(null);
         const task = localData
-          ? getDocument({ data: localData })
-          : getDocument({ url: fileUrl });
+          ? getDocument({ data: localData, ...PDFJS_ASSET_OPTIONS })
+          : getDocument({ url: fileUrl, ...PDFJS_ASSET_OPTIONS });
         const loaded = await task.promise;
         if (cancelled) return;
         setDoc(loaded);

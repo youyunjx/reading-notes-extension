@@ -15,6 +15,9 @@ dist/
 jot-backup*.json
 reading-notes-backup*.json
 
+# PDF.js runtime assets, copied from node_modules at build time
+public/pdfjs/
+
 # Web Store packaging artifacts
 .package/
 jot-v*.zip
